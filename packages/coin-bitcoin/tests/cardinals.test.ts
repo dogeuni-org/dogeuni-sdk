@@ -9,7 +9,7 @@ import {
 
 import {base} from "@unielon/crypto-lib";
 
-describe("doginals test", () => {
+describe("cardinals test", () => {
     test("inscribeNft", async () => {
         let privateKey = "QRJx7uvj55L3oVRADWJfFjJ31H9Beg75xZ2GcmR8rKFNHA4ZacKJ"
         const commitTxPrevOutputList: PrevOutput[] = [];
