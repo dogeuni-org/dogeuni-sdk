@@ -13,6 +13,7 @@ export type DrcInscriptionData = {
     contentType: string
     body: string | Buffer
     revealAddr: string
+    receiveAddr?: string
     repeat: number
 }
 
@@ -107,12 +108,20 @@ export class DrcInscriptionTool {
             tx.version = defaultTxVersion;
             // @ts-ignore
             let body = JSON.parse(inscriptionDataList[i].body)
+            let receiveAddr = inscriptionDataList[i].receiveAddr || ''
             let repeats = 1
             if (body.p == drc20P && opMint == body.op) {
                 repeats = inscriptionDataList[i].repeat
             }
-            tx.addOutput(inscriptionTxCtxData.revealPkScript, defaultRevealOutValue * repeats);
-
+            if(receiveAddr) {
+                const receiveAddrList = receiveAddr.split(',');
+                receiveAddrList.map(item => {
+                    const changePkScript = bitcoin.address.toOutputScript(item, network);
+                    tx.addOutput(changePkScript, defaultRevealOutValue * repeats);
+                })
+            } else {
+                tx.addOutput(inscriptionTxCtxData.revealPkScript, defaultRevealOutValue * repeats);
+            }
             const emptySignature = Buffer.alloc(71);
             const inscriptionBuilder: bitcoin.payments.StackElement[] = [];
             inscriptionBuilder.push(ops.OP_10);
@@ -120,7 +129,6 @@ export class DrcInscriptionTool {
             inscriptionBuilder.push(emptySignature);
             inscriptionBuilder.push(inscriptionTxCtxData.inscriptionScript);
             const inscriptionScript = bitcoin.script.compile(inscriptionBuilder);
-
             tx.addInput(Buffer.alloc(32), i, defaultSequenceNum, inscriptionScript);
             let prevOutputValue = defaultRevealOutValue * repeats
             const isDrc20Operation = (body: { p: string; }, op: string) => body.p === drc20P && [opDeploy, opTransfer, opMint].includes(op)
@@ -176,7 +184,6 @@ export class DrcInscriptionTool {
             this.commitTxPrevOutputFetcher.push(commitTxPrevOutput.amount);
             totalSenderAmount += commitTxPrevOutput.amount;
         });
-
         this.inscriptionTxCtxDataList.forEach(inscriptionTxCtxData => {
             tx.addOutput(inscriptionTxCtxData.revealTxPrevOutput.pkScript, inscriptionTxCtxData.revealTxPrevOutput.value);
         });
