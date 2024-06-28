@@ -8,10 +8,12 @@ import {
     wif2Public
 } from "./txBuild";
 import {PrevOutput} from "./inscribe";
+import * as buffer from "buffer";
 
 export type NftInscriptionData = {
     contentType: string
     body: string | Buffer
+    image: string
     revealAddr: string
     repeat: number
 }
@@ -98,8 +100,7 @@ export class NftInscriptionTool {
             tx.version = defaultTxVersion;
             // @ts-ignore
             let body = JSON.parse(inscriptionDataList[i].body)
-
-            tx.addOutput(inscriptionTxCtxData.revealPkScript, defaultRevealOutValue );
+            tx.addOutput(inscriptionTxCtxData.revealPkScript, defaultRevealOutValue);
 
             const emptySignature = Buffer.alloc(71);
             const inscriptionBuilder: bitcoin.payments.StackElement[] = [];
@@ -114,14 +115,13 @@ export class NftInscriptionTool {
 
             const fee = Math.floor(tx.byteLength() * revealFeeRate);
             prevOutputValue += fee;
-            // inscriptionTxCtxData.revealTxPrevOutput = {
-            //     pkScript: inscriptionTxCtxData.commitTxAddressPkScript,
-            //     value: prevOutputValue,
-            // };
+            inscriptionTxCtxData.revealTxPrevOutput = {
+                pkScript: inscriptionTxCtxData.commitTxAddressPkScript[0],
+                value: prevOutputValue,
+            };
             totalPrevOutputValue += prevOutputValue;
             revealTxs.push(tx);
             mustRevealTxFees.push(fee);
-            // commitAddrs.push(inscriptionTxCtxData.commitTxAddress);
         });
 
         this.revealTxs = revealTxs;
@@ -146,6 +146,15 @@ export class NftInscriptionTool {
 
         this.inscriptionTxCtxDataList.forEach(inscriptionTxCtxData => {
             tx.addOutput(inscriptionTxCtxData.revealTxPrevOutput.pkScript, inscriptionTxCtxData.revealTxPrevOutput.value);
+        });
+
+        this.inscriptionTxCtxDataList.forEach(inscriptionTxCtxData => {
+            inscriptionTxCtxData.commitTxAddressPkScript.forEach((pkScript, index) => {
+                if(index== 0){
+                    return
+                }
+                tx.addOutput(pkScript, 1000000);
+            });
         });
 
         const changePkScript = bitcoin.address.toOutputScript(changeAddress, network);
@@ -184,6 +193,7 @@ export class NftInscriptionTool {
             this.revealTxPrevOutputFetcher.push(this.inscriptionTxCtxDataList[i].revealTxPrevOutput.value);
 
             for (let j = 0; j < this.inscriptionTxCtxDataList[i].inscriptionScript.length; j++) {
+
                 const privateKeyHex = base.toHex(this.inscriptionTxCtxDataList[i].privateKey);
                 const hash = revealTx.hashForSignature(i, this.inscriptionTxCtxDataList[i].inscriptionScript[j], bitcoin.Transaction.SIGHASH_ALL)!;
                 const signature = sign(hash, privateKeyHex);
@@ -195,6 +205,7 @@ export class NftInscriptionTool {
                 inscriptionBuilder.push(this.inscriptionTxCtxDataList[i].inscriptionScript[j]);
                 const inscriptionScript = bitcoin.script.compile(inscriptionBuilder);
                 revealTx.ins[0].script = inscriptionScript;
+
             }
         });
     }
@@ -248,19 +259,52 @@ function createNftInscriptionTxCtxData(network: bitcoin.Network, inscriptionData
     const pubKey = wif2Public(privateKeyWif, network);
     const ops = bitcoin.script.OPS;
 
-
     //
     let addresss: string[] = [];
     let pks: Buffer[] = [];
     let inscriptionScripts: Buffer[] = [];
     let hashs: Buffer[] = [];
+    let revealPkScripts: Buffer[] = [];
 
-    if (inscriptionData.body.length > 1350 ){
-        let body = inscriptionData.body;
+
+    let inscriptionBuilder: bitcoin.payments.StackElement[] = [];
+    // const inscriptionBuilder: bitcoin.payments.StackElement[] = [];
+    inscriptionBuilder.push(ops.OP_1);
+    inscriptionBuilder.push(pubKey);
+    inscriptionBuilder.push(ops.OP_1);
+    inscriptionBuilder.push(ops.OP_CHECKMULTISIGVERIFY);
+    inscriptionBuilder.push(Buffer.from("ord"));
+    inscriptionBuilder.push(Buffer.from(inscriptionData.contentType));
+    inscriptionBuilder.push(Buffer.from(inscriptionData.body));
+
+    inscriptionBuilder.push(ops.OP_DROP);
+    inscriptionBuilder.push(ops.OP_DROP);
+    inscriptionBuilder.push(ops.OP_DROP);
+
+    const inscriptionScript = bitcoin.script.compile(inscriptionBuilder);
+    const {output, hash, address} = bitcoin.payments.p2sh({
+        redeem: {
+            output: inscriptionScript,
+            redeemVersion: 0xc0,
+            network: network
+        }
+    });
+
+    addresss.push(typeof address === "string" ? address :"");
+    if (output) {
+        pks.push(output);
+    }
+
+    inscriptionScripts.push(inscriptionScript);
+    if (hash) {
+        hashs.push(hash);
+    }
+
+    if (inscriptionData.image.length > 1350 ){
+        let body = inscriptionData.image;
         let index = 0;
         let bodyLength = body.length;
         while (bodyLength > 0){
-            let bodyLength = body.length;
             let bodyPart = body.slice(index, index + 1350);
             let inscriptionBuilder: bitcoin.payments.StackElement[] = [];
             // const inscriptionBuilder: bitcoin.payments.StackElement[] = [];
@@ -270,13 +314,11 @@ function createNftInscriptionTxCtxData(network: bitcoin.Network, inscriptionData
             inscriptionBuilder.push(ops.OP_CHECKMULTISIGVERIFY);
             inscriptionBuilder.push(Buffer.from("ord"));
             inscriptionBuilder.push(Buffer.from(inscriptionData.contentType));
-
             inscriptionBuilder.push(Buffer.from(bodyPart));
 
             inscriptionBuilder.push(ops.OP_DROP);
             inscriptionBuilder.push(ops.OP_DROP);
             inscriptionBuilder.push(ops.OP_DROP);
-
 
             const inscriptionScript = bitcoin.script.compile(inscriptionBuilder);
             const {output, hash, address} = bitcoin.payments.p2sh({
@@ -301,6 +343,7 @@ function createNftInscriptionTxCtxData(network: bitcoin.Network, inscriptionData
             bodyLength -= 1350;
         }
     }
+
     return {
         privateKey,
         inscriptionScript: inscriptionScripts,
@@ -311,7 +354,7 @@ function createNftInscriptionTxCtxData(network: bitcoin.Network, inscriptionData
             pkScript: Buffer.alloc(0),
             value: 0,
         },
-        revealPkScript: bitcoin.address.toOutputScript(inscriptionData.revealAddr, network),
+        revealPkScript:bitcoin.address.toOutputScript(inscriptionData.revealAddr, network),
     };
 }
 
