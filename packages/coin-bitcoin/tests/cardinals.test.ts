@@ -2,7 +2,7 @@ import {
     dogeCoin,
     DrcInscriptionData,
     inscribeDrc,
-    inscribeNft,
+    inscribeFile,
     InscribeTxs,
     NftInscriptionData,
     PrevOutput,
@@ -45,7 +45,7 @@ describe("cardinals test", () => {
         const txs: InscribeTxs = inscribeDrc(dogeCoin, request);
         console.log(txs);
     });
-    test("inscribeNft", async () => {
+    test("inscribeFile", async () => {
         let privateKey = "QRJx7uvj55L3oVRADWJfFjJ31H9Beg75xZ2GcmR8rKFNHA4ZacKJ"
         const commitTxPrevOutputList: PrevOutput[] = [];
         commitTxPrevOutputList.push({
@@ -71,7 +71,7 @@ describe("cardinals test", () => {
             inscriptionDataList,
             changeAddress: 'DJu5mMUKprfnyBhot2fqCsW9sZCsfdfcrZ',
         };
-        const txs: InscribeTxs = inscribeNft(dogeCoin, request);
+        const txs: InscribeTxs = inscribeFile(dogeCoin, request);
         console.log(txs);
     });
 
