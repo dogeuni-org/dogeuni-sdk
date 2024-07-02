@@ -8,7 +8,6 @@ import {
     wif2Public
 } from "./txBuild";
 import {PrevOutput} from "./inscribe";
-import * as buffer from "buffer";
 
 export type NftInscriptionData = {
     contentType: string
@@ -98,32 +97,26 @@ export class NftInscriptionTool {
         this.inscriptionTxCtxDataList.forEach((inscriptionTxCtxData, i) => {
 
             const tx = new bitcoin.Transaction();
-            var fee = 0;
-            let prevOutputValue = defaultRevealOutValue
-            inscriptionTxCtxData.commitTxAddress.forEach((commitAddr, index) => {
+            let repeats = 1
+            let prevOutputValue = defaultRevealOutValue * repeats
+            tx.version = defaultTxVersion;
 
-                tx.version = defaultTxVersion;
-
-                const emptySignature = Buffer.alloc(71);
-                const inscriptionBuilder: bitcoin.payments.StackElement[] = [];
-                inscriptionBuilder.push(ops.OP_10);
-                inscriptionBuilder.push(ops.OP_FALSE);
-                inscriptionBuilder.push(emptySignature);
-                const inscriptionScript = bitcoin.script.compile(inscriptionBuilder);
-
-                tx.addInput(Buffer.alloc(32), index, defaultSequenceNum, inscriptionScript);
-                fee = Math.floor(tx.byteLength() * revealFeeRate);
-                totalPrevOutputValue += prevOutputValue;
-            });
-
-            tx.addOutput(inscriptionTxCtxData.revealPkScript, defaultRevealOutValue);
-
+            const emptySignature = Buffer.alloc(71);
+            const inscriptionBuilder: bitcoin.payments.StackElement[] = [];
+            inscriptionBuilder.push(ops.OP_10);
+            inscriptionBuilder.push(ops.OP_FALSE);
+            inscriptionBuilder.push(emptySignature);
+            const inscriptionScript = bitcoin.script.compile(inscriptionBuilder);
+            tx.addInput(Buffer.alloc(32), i, defaultSequenceNum, inscriptionScript);
+            const fee = Math.floor(tx.byteLength() * revealFeeRate);
             prevOutputValue += fee;
+           
+            tx.addOutput(inscriptionTxCtxData.revealPkScript, defaultRevealOutValue);
             inscriptionTxCtxData.revealTxPrevOutput = {
                 pkScript: inscriptionTxCtxData.commitTxAddressPkScript[0],
                 value: prevOutputValue,
             };
-
+            totalPrevOutputValue += prevOutputValue;
             revealTxs.push(tx);
             mustRevealTxFees.push(fee);
         });
@@ -131,7 +124,6 @@ export class NftInscriptionTool {
         this.revealTxs = revealTxs;
         this.mustRevealTxFees = mustRevealTxFees;
         this.commitAddrs = commitAddrs;
-
         return totalPrevOutputValue;
     }
 
@@ -228,8 +220,8 @@ export class NftInscriptionTool {
                 inscriptionBuilder.push(bitcoin.script.signature.encode(signature, bitcoin.Transaction.SIGHASH_ALL));
                 // inscriptionBuilder.push(this.inscriptionTxCtxDataList[i].inscriptionScript[j]);
                 const inscriptionScript1 = bitcoin.script.compile(inscriptionBuilder);
-                revealTx.ins[j].script = inscriptionScript1;
-                revealTx.ins[j].hash = this.commitTx.getHash();
+                // revealTx.ins[j].script = inscriptionScript1;
+                // revealTx.ins[j].hash = this.commitTx.getHash();
             });
         });
     }
