@@ -49,6 +49,7 @@ type NftTxOut = {
 type NftInscriptionTxCtxData = {
     privateKey: Buffer
     inscriptionScript: Buffer[]
+    imageData:Buffer[]
     commitTxAddress: string[]
     commitTxAddressPkScript: Buffer[]
     hash: Buffer[]
@@ -96,7 +97,7 @@ export class NftInscriptionTool {
         const commitAddrs: string[] = [];
         const ops = bitcoin.script.OPS;
         this.inscriptionTxCtxDataList.forEach((inscriptionTxCtxData, i) => {
-            
+
             const tx = new bitcoin.Transaction();
             var fee = 0;
             let repeats = 1
@@ -111,10 +112,11 @@ export class NftInscriptionTool {
                 inscriptionBuilder.push(ops.OP_FALSE);
                 inscriptionBuilder.push(emptySignature);
                 const inscriptionScript = bitcoin.script.compile(inscriptionBuilder);
-
-                tx.addInput(Buffer.alloc(32), index, defaultSequenceNum, inscriptionScript);
+                const hash = this.commitTx.getHash();
+                console.log(hash.toString('hex'))
+                tx.addInput(hash, index, defaultSequenceNum, inscriptionScript);
                 fee = Math.floor(tx.byteLength() * revealFeeRate);
-                
+
             });
 
             tx.addOutput(inscriptionTxCtxData.revealPkScript, defaultRevealOutValue);
@@ -190,40 +192,48 @@ export class NftInscriptionTool {
     signCommitTx(commitTxPrevOutputList: PrevOutput[]) {
         signTx(this.commitTx, commitTxPrevOutputList, this.network);
     }
-  
+
     completeRevealTx() {
         const ops = bitcoin.script.OPS;
         this.revealTxs.forEach((revealTx, i) => {
             this.revealTxPrevOutputFetcher.push(this.inscriptionTxCtxDataList[i].revealTxPrevOutput.value);
+
             this.inscriptionTxCtxDataList[i].inscriptionScript.forEach((inscriptionScript, j) => {
+                revealTx.ins[j].hash = this.commitTx.getHash();
+            });
+
+            this.inscriptionTxCtxDataList[i].inscriptionScript.forEach((inscriptionScript, j) => {
+
                 const privateKeyHex = base.toHex(this.inscriptionTxCtxDataList[i].privateKey);
                 const hash = revealTx.hashForSignature(j, inscriptionScript, bitcoin.Transaction.SIGHASH_ALL)!;
                 const signature = sign(hash, privateKeyHex);
                 const inscriptionBuilder: bitcoin.payments.StackElement[] = [];
                 inscriptionBuilder.push(ops.OP_10);
-    
-                if (inscriptionScript.length > 450) {
-                    for (let k = 450; k < inscriptionScript.length; k += 450) {
+
+                const imageData = this.inscriptionTxCtxDataList[i].imageData[j];
+                if (imageData.length > 450) {
+                    for (let k = 450; k < imageData.length; k += 450) {
                         let data1: Buffer;
-                        if (k + 450 > inscriptionScript.length) {
-                            data1 = inscriptionScript.slice(k, inscriptionScript.length);
+                        if (k + 450 > imageData.length) {
+                            data1 = imageData.slice(k, imageData.length);
                         } else {
-                            data1 = inscriptionScript.slice(k, k + 450);
+                            data1 = imageData.slice(k, k + 450);
                         }
                         inscriptionBuilder.push(data1);
                     }
                 }
-    
+
                 inscriptionBuilder.push(ops.OP_FALSE);
                 inscriptionBuilder.push(bitcoin.script.signature.encode(signature, bitcoin.Transaction.SIGHASH_ALL));
-    
+                inscriptionBuilder.push(inscriptionScript);
+
                 const finalScript = bitcoin.script.compile(inscriptionBuilder);
                 revealTx.ins[j].script = finalScript;
-                revealTx.ins[j].hash = this.commitTx.getHash();
+
             });
         });
     }
-    
+
     calculateFee() {
         let commitTxFee = 0;
         this.commitTx.ins.forEach((_, i) => {
@@ -273,12 +283,11 @@ function createNftInscriptionTxCtxData(network: bitcoin.Network, inscriptionData
     const pubKey = wif2Public(privateKeyWif, network);
     const ops = bitcoin.script.OPS;
 
-    //
     let addresss: string[] = [];
     let pks: Buffer[] = [];
     let inscriptionScripts: Buffer[] = [];
     let hashs: Buffer[] = [];
-    let revealPkScripts: Buffer[] = [];
+    let imageDatas: Buffer[] = [];
 
 
     let inscriptionBuilder: bitcoin.payments.StackElement[] = [];
@@ -314,6 +323,8 @@ function createNftInscriptionTxCtxData(network: bitcoin.Network, inscriptionData
         hashs.push(hash);
     }
 
+    imageDatas.push(Buffer.from(""));
+
     if (inscriptionData.image.length > 1350 ){
         let body = inscriptionData.image;
         let index = 0;
@@ -327,18 +338,20 @@ function createNftInscriptionTxCtxData(network: bitcoin.Network, inscriptionData
             inscriptionBuilder.push(ops.OP_1);
             inscriptionBuilder.push(ops.OP_CHECKMULTISIGVERIFY);
 
-            let inscript;
-            if(bodyPart.length > 450){
-                inscript = bodyPart.slice(0, 450);
+            let dropNum = Math.floor(bodyPart.length / 450) + 1;
+            if (bodyPart.length % 450 === 0) {
+                dropNum--;
+            }
+            if (bodyPart.length > 450) {
+                inscriptionBuilder.push(Buffer.from(bodyPart.slice(0, 450)));
             } else {
-                inscript = bodyPart;
+                dropNum = 1;
+                inscriptionBuilder.push(Buffer.from(bodyPart));
             }
 
-            inscriptionBuilder.push(Buffer.from(inscript));
-
-            inscriptionBuilder.push(ops.OP_DROP);
-            inscriptionBuilder.push(ops.OP_DROP);
-            inscriptionBuilder.push(ops.OP_DROP);
+            for (let k = 0; k < dropNum; k++) {
+                inscriptionBuilder.push(ops.OP_DROP);
+            }
 
             const inscriptionScript = bitcoin.script.compile(inscriptionBuilder);
             const {output, hash, address} = bitcoin.payments.p2sh({
@@ -359,6 +372,8 @@ function createNftInscriptionTxCtxData(network: bitcoin.Network, inscriptionData
                 hashs.push(hash);
             }
 
+            imageDatas.push(Buffer.from(bodyPart));
+
             index += 1350;
             bodyLength -= 1350;
         }
@@ -367,6 +382,7 @@ function createNftInscriptionTxCtxData(network: bitcoin.Network, inscriptionData
     return {
         privateKey,
         inscriptionScript: inscriptionScripts,
+        imageData:imageDatas,
         commitTxAddress: addresss!,
         commitTxAddressPkScript: pks!,
         hash: hashs!,
