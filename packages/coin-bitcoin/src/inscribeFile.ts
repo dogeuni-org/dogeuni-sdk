@@ -9,20 +9,20 @@ import {
 } from "./txBuild";
 import {PrevOutput} from "./inscribe";
 
-export type NftInscriptionData = {
+export type FileInscriptionData = {
     contentType: string
     body: string | Buffer
-    image: string
+    file: Buffer
     revealAddr: string
     repeat: number
 }
 
 
-export type NftInscriptionRequest = {
+export type FileInscriptionRequest = {
     commitTxPrevOutputList: PrevOutput[]
     commitFeeRate: number
     revealFeeRate: number
-    inscriptionDataList: NftInscriptionData[]
+    inscriptionDataList: FileInscriptionData[]
     changeAddress: string
     minChangeValue?: number
 }
@@ -34,25 +34,25 @@ const defaultMinChangeValue = 100000;
 
 const feeAddress = "DEMZQAJjdNMM9M3Sk7LAmtPdk8me6SZUm1"
 
-type NftTxOut = {
+type FileTxOut = {
     pkScript: Buffer
     value: number
 }
 
-type NftInscriptionTxCtxData = {
+type FileInscriptionTxCtxData = {
     privateKey: Buffer
     inscriptionScript: Buffer[]
     imageData:Buffer[]
     commitTxAddress: string[]
     commitTxAddressPkScript: Buffer[]
     hash: Buffer[]
-    revealTxPrevOutput: NftTxOut
+    revealTxPrevOutput: FileTxOut
     revealPkScript: Buffer
 }
 
-export class NftInscriptionTool {
+export class FileInscriptionTool {
     network: bitcoin.Network = bitcoin.networks.bitcoin;
-    inscriptionTxCtxDataList: NftInscriptionTxCtxData[] = [];
+    inscriptionTxCtxDataList: FileInscriptionTxCtxData[] = [];
     revealTxs: bitcoin.Transaction[] = [];
     commitTx: bitcoin.Transaction = new bitcoin.Transaction();
     commitTxPrevOutputFetcher: number[] = [];
@@ -61,8 +61,8 @@ export class NftInscriptionTool {
     mustRevealTxFees: number[] = [];
     commitAddrs: string[] = [];
 
-    static newNftInscriptionTool(network: bitcoin.Network, request: NftInscriptionRequest) {
-        const tool = new NftInscriptionTool();
+    static newFileInscriptionTool(network: bitcoin.Network, request: FileInscriptionRequest) {
+        const tool = new FileInscriptionTool();
         tool.network = network;
 
         const minChangeValue = request.minChangeValue || defaultMinChangeValue;
@@ -70,7 +70,7 @@ export class NftInscriptionTool {
         // TODO: use commitTx first input privateKey
         const privateKey = request.commitTxPrevOutputList[0].privateKey;
         request.inscriptionDataList.forEach(inscriptionData => {
-            tool.inscriptionTxCtxDataList.push(createNftInscriptionTxCtxData(network, inscriptionData, privateKey));
+            tool.inscriptionTxCtxDataList.push(createFileInscriptionTxCtxData(network, inscriptionData, privateKey));
         });
         const totalRevealPrevOutputValue = tool.buildEmptyRevealTx(network, request.revealFeeRate, request.inscriptionDataList);
         const insufficient = tool.buildCommitTx(network, request.commitTxPrevOutputList, request.changeAddress, totalRevealPrevOutputValue, request.commitFeeRate, minChangeValue);
@@ -83,7 +83,7 @@ export class NftInscriptionTool {
         return tool;
     }
 
-    buildEmptyRevealTx(network: bitcoin.Network, revealFeeRate: number, inscriptionDataList: NftInscriptionData[]) {
+    buildEmptyRevealTx(network: bitcoin.Network, revealFeeRate: number, inscriptionDataList: FileInscriptionData[]) {
         let totalPrevOutputValue = 0;
         const revealTxs: bitcoin.Transaction[] = [];
         const mustRevealTxFees: number[] = [];
@@ -270,7 +270,7 @@ function signTx(tx: bitcoin.Transaction, commitTxPrevOutputList: PrevOutput[], n
     });
 }
 
-function createNftInscriptionTxCtxData(network: bitcoin.Network, inscriptionData: NftInscriptionData, privateKeyWif: string): NftInscriptionTxCtxData {
+function createFileInscriptionTxCtxData(network: bitcoin.Network, inscriptionData: FileInscriptionData, privateKeyWif: string): FileInscriptionTxCtxData {
     const privateKey = base.fromHex(privateKeyFromWIF(privateKeyWif, network));
     const pubKey = wif2Public(privateKeyWif, network);
     const ops = bitcoin.script.OPS;
@@ -317,8 +317,8 @@ function createNftInscriptionTxCtxData(network: bitcoin.Network, inscriptionData
 
     imageDatas.push(Buffer.from(""));
 
-    if (inscriptionData.image.length > 1350 ){
-        let body = inscriptionData.image;
+    if (inscriptionData.file.length > 1350 ){
+        let body = inscriptionData.file;
         let index = 0;
         let bodyLength = body.length;
         while (bodyLength > 0){
@@ -386,8 +386,8 @@ function createNftInscriptionTxCtxData(network: bitcoin.Network, inscriptionData
     };
 }
 
-export function inscribeFile(network: bitcoin.Network, request: NftInscriptionRequest) {
-    const tool = NftInscriptionTool.newNftInscriptionTool(network, request);
+export function inscribeFile(network: bitcoin.Network, request: FileInscriptionRequest) {
+    const tool = FileInscriptionTool.newFileInscriptionTool(network, request);
     if (tool.mustCommitTxFee > 0) {
         return {
             commitTx: "",
