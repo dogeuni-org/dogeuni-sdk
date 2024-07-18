@@ -10,4 +10,5 @@ export * from "./psbtSign"
 export * as message from "./message"
 export * from "./BtcWallet"
 export * from "./onekey"
+export * from "./transaction"
 

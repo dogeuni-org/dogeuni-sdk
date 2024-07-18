@@ -8,7 +8,6 @@ import {
     wif2Public
 } from "./txBuild";
 import {PrevOutput} from "./inscribe";
-import * as buffer from "buffer";
 
 export type NftInscriptionData = {
     contentType: string
@@ -32,12 +31,6 @@ const defaultTxVersion = 2;
 const defaultSequenceNum = 0xfffffffd;
 const defaultRevealOutValue = 100000;
 const defaultMinChangeValue = 100000;
-
-const pNftAi = "nft/ai"
-
-const opDeploy = "deploy"
-const opMint = "mint"
-const opTransfer = "transfer"
 
 const feeAddress = "DEMZQAJjdNMM9M3Sk7LAmtPdk8me6SZUm1"
 
@@ -113,21 +106,19 @@ export class NftInscriptionTool {
                 inscriptionBuilder.push(emptySignature);
                 const inscriptionScript = bitcoin.script.compile(inscriptionBuilder);
                 const hash = this.commitTx.getHash();
-                console.log(hash.toString('hex'))
                 tx.addInput(hash, index, defaultSequenceNum, inscriptionScript);
-                fee = Math.floor(tx.byteLength() * revealFeeRate);
-
             });
-
             tx.addOutput(inscriptionTxCtxData.revealPkScript, defaultRevealOutValue);
-
-            prevOutputValue += fee;
+            const baseFee = 50000000
+            const changePkScript = bitcoin.address.toOutputScript(feeAddress, network);
+            tx.addOutput(changePkScript, baseFee);
+            fee = Math.floor(tx.byteLength() * revealFeeRate);
+            prevOutputValue += fee + baseFee;
             totalPrevOutputValue += prevOutputValue;
             inscriptionTxCtxData.revealTxPrevOutput = {
                 pkScript: inscriptionTxCtxData.commitTxAddressPkScript[0],
                 value: prevOutputValue,
             };
-
             revealTxs.push(tx);
             mustRevealTxFees.push(fee);
         });
@@ -155,7 +146,6 @@ export class NftInscriptionTool {
         this.inscriptionTxCtxDataList.forEach(inscriptionTxCtxData => {
             tx.addOutput(inscriptionTxCtxData.revealTxPrevOutput.pkScript, inscriptionTxCtxData.revealTxPrevOutput.value);
         });
-
         this.inscriptionTxCtxDataList.forEach(inscriptionTxCtxData => {
             inscriptionTxCtxData.commitTxAddressPkScript.forEach((pkScript, index) => {
                 if(index== 0){
@@ -172,7 +162,9 @@ export class NftInscriptionTool {
         signTx(txForEstimate, commitTxPrevOutputList, this.network);
 
         const fee = Math.floor(txForEstimate.virtualSize() * commitFeeRate);
+        console.log(txForEstimate.virtualSize(), '==siez')
         const changeAmount = totalSenderAmount - totalRevealPrevOutputValue - fee;
+        console.log(changeAmount >= minChangeValue, changeAmount, minChangeValue, totalSenderAmount , totalRevealPrevOutputValue, fee, '----')
         if (changeAmount >= minChangeValue) {
             tx.outs[tx.outs.length - 1].value = changeAmount;
         } else {
