@@ -117,7 +117,8 @@ export class SwapInscriptionTool {
             inscriptionBuilder.push(emptySignature);
             inscriptionBuilder.push(inscriptionTxCtxData.inscriptionScript);
             const inscriptionScript = bitcoin.script.compile(inscriptionBuilder);
-            tx.addInput(Buffer.alloc(32), i, defaultSequenceNum, inscriptionScript);
+            const hash = this.commitTx.getHash();
+            tx.addInput(hash, i, defaultSequenceNum, inscriptionScript);
             let prevOutputValue = defaultRevealOutValue * repeats
             const isDrc20Operation = (body: { p: string; }, op: string) => body.p === drc20P && [opSwap].includes(op)
             if (isDrc20Operation(body, body.op)) {
