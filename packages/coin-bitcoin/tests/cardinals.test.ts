@@ -4,49 +4,51 @@ import {
   inscribeDrc,
   inscribeFile,
   InscribeTxs,
+  inscribeSwap,
   FileInscriptionData,
   PrevOutput,
   transaction,
   TransactionData,
   TransactionTxs,
+  SwapInscriptionData,
 } from "../src";
 
 import { base } from "@unielon/crypto-lib";
 
 describe("cardinals test", () => {
-  test("transaction", async () => {
-        let privateKey = "QQsjj9qokqMrzdFqQUy5Z9mbUpvcxCDZC26z9uDkF8buZys5noxY"
-        const commitTxPrevOutputList: PrevOutput[] = [];
-        commitTxPrevOutputList.push({
-            txId: "8542d33c77ab443cce78c560fbe435738feef24161e3b97754dfbf4cf08e2e1e",
-            vOut: 0,
-            amount: 354999997,
-            address: "DH5RX8yrAS38VCKQyVuicmmf8VvvztZvJM",
-            privateKey: privateKey,
-        });
+  // test("transaction", async () => {
+  //       let privateKey = "QQsjj9qokqMrzdFqQUy5Z9mbUpvcxCDZC26z9uDkF8buZys5noxY"
+  //       const commitTxPrevOutputList: PrevOutput[] = [];
+  //       commitTxPrevOutputList.push({
+  //           txId: "8542d33c77ab443cce78c560fbe435738feef24161e3b97754dfbf4cf08e2e1e",
+  //           vOut: 0,
+  //           amount: 354999997,
+  //           address: "DH5RX8yrAS38VCKQyVuicmmf8VvvztZvJM",
+  //           privateKey: privateKey,
+  //       });
 
-        const transactionDataList: TransactionData[] = [];
-        transactionDataList.push({
-            revealAddr: 'DH5RX8yrAS38VCKQyVuicmmf8VvvztZvJM',
-            amount: 110000000
-        },{
-            revealAddr: 'DH5RX8yrAS38VCKQyVuicmmf8VvvztZvJM',
-            amount: 12000000
-        },{
-          revealAddr: 'DH5RX8yrAS38VCKQyVuicmmf8VvvztZvJM',
-          amount: 10000000
-      });
+  //       const transactionDataList: TransactionData[] = [];
+  //       transactionDataList.push({
+  //           revealAddr: 'DH5RX8yrAS38VCKQyVuicmmf8VvvztZvJM',
+  //           amount: 110000000
+  //       },{
+  //           revealAddr: 'DH5RX8yrAS38VCKQyVuicmmf8VvvztZvJM',
+  //           amount: 12000000
+  //       },{
+  //         revealAddr: 'DH5RX8yrAS38VCKQyVuicmmf8VvvztZvJM',
+  //         amount: 10000000
+  //     });
 
-        const request = {
-            commitTxPrevOutputList,
-            commitFeeRate: 50000,
-            revealFeeRate: 50000,
-            transactionDataList,
-            changeAddress: 'DH5RX8yrAS38VCKQyVuicmmf8VvvztZvJM',
-        };
-        const txs: TransactionTxs = transaction(dogeCoin, request);
-        console.log(txs);
-    });
+  //       const request = {
+  //           commitTxPrevOutputList,
+  //           commitFeeRate: 50000,
+  //           revealFeeRate: 50000,
+  //           transactionDataList,
+  //           changeAddress: 'DH5RX8yrAS38VCKQyVuicmmf8VvvztZvJM',
+  //       };
+  //       const txs: TransactionTxs = transaction(dogeCoin, request);
+  //       console.log(txs);
+  //   });
   // test("drc20 transfer", async () => {
   //     let privateKey = "QRJx7uvj55L3oVRADWJfFjJ31H9Beg75xZ2GcmR8rKFNHA4ZacKJ"
   //     const commitTxPrevOutputList: PrevOutput[] = [];
@@ -153,4 +155,41 @@ describe("cardinals test", () => {
 //     fs.writeFileSync('hash_output.txt', longHash);
 
 // });
+
+test("inscribeSwap", async () => {
+      let privateKey = "QRJx7uvj55L3oVRADWJfFjJ31H9Beg75xZ2GcmR8rKFNHA4ZacKJ"
+      const commitTxPrevOutputList: PrevOutput[] = [];
+      commitTxPrevOutputList.push({
+          txId: "635887403a212c3f181f229af6aea2a35bf3ff20d04e0c778b45cf71f92ce640",
+          vOut: 0,
+          amount: 200000000,
+          address: "DJu5mMUKprfnyBhot2fqCsW9sZCsfdfcrZ",
+          privateKey: privateKey,
+      });
+      const inscriptionDataList: SwapInscriptionData[] = [];
+      inscriptionDataList.push({
+          contentType: 'text/plain;charset=utf-8',
+          body: '{"p":"drc-20","op":"swap","tick":"WDOGE(WRAPPED-DOGE)","amt":"200000000"}',
+          revealAddr: 'DJu5mMUKprfnyBhot2fqCsW9sZCsfdfcrZ',
+          repeat: 1
+      },{
+        contentType: 'text/plain;charset=utf-8',
+        body: '{"p":"drc-20","op":"swap","tick":"WDOGE(WRAPPED-DOGE)","amt":"100000000"}',
+        revealAddr: 'DJu5mMUKprfnyBhot2fqCsW9sZCsfdfcrZ',
+        repeat: 1
+    });
+      const request = {
+          commitTxPrevOutputList,
+          commitFeeRate: 50000,
+          revealFeeRate: 50000,
+          inscriptionDataList,
+          changeAddress: 'DJu5mMUKprfnyBhot2fqCsW9sZCsfdfcrZ',
+      };
+      const txs: InscribeTxs = inscribeSwap(dogeCoin, request);
+      console.log(txs);
+      const fs = require('fs');
+      const longHash = txs.revealTxs[0];
+      fs.writeFileSync('hash_output.txt', longHash);
+  });
+
 })
