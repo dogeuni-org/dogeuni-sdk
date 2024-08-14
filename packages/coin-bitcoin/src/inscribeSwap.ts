@@ -89,6 +89,9 @@ export class SwapInscriptionTool {
         const commitAddrs: string[] = [];
         const ops = bitcoin.script.OPS;
         const tx = new bitcoin.Transaction();
+        let prevOutputValue = defaultRevealOutValue
+        const fee = Math.floor(tx.byteLength() * revealFeeRate);
+        prevOutputValue += fee;
 
         this.inscriptionTxCtxDataList.forEach((inscriptionTxCtxData, i) => {
 
@@ -103,6 +106,15 @@ export class SwapInscriptionTool {
             const inscriptionScript = bitcoin.script.compile(inscriptionBuilder);
             const hash = this.commitTx.getHash();
             tx.addInput(hash, i, defaultSequenceNum, inscriptionScript);
+
+            inscriptionTxCtxData.revealTxPrevOutput = {
+                pkScript: inscriptionTxCtxData.commitTxAddressPkScript,
+                value: prevOutputValue,
+            };
+
+            totalPrevOutputValue += prevOutputValue;
+            mustRevealTxFees.push(fee);
+            commitAddrs.push(inscriptionTxCtxData.commitTxAddress);
 
         });
 
@@ -119,24 +131,10 @@ export class SwapInscriptionTool {
             tx.addOutput(this.inscriptionTxCtxDataList[0].revealPkScript, defaultRevealOutValue);
         }
 
-        let prevOutputValue = defaultRevealOutValue
         const baseFee = 50000000
         const changePkScript = bitcoin.address.toOutputScript(feeAddress, network);
         tx.addOutput(changePkScript, baseFee);
         prevOutputValue += baseFee
-
-        const fee = Math.floor(tx.byteLength() * revealFeeRate);
-        prevOutputValue += fee;
-
-        this.inscriptionTxCtxDataList[0].revealTxPrevOutput = {
-            pkScript: this.inscriptionTxCtxDataList[0].commitTxAddressPkScript,
-            value: prevOutputValue,
-        };
-
-        totalPrevOutputValue += prevOutputValue;
-        mustRevealTxFees.push(fee);
-        commitAddrs.push(this.inscriptionTxCtxDataList[0].commitTxAddress);
-
 
         this.revealTxs[0] = tx;
         this.mustRevealTxFees = mustRevealTxFees;
@@ -157,6 +155,7 @@ export class SwapInscriptionTool {
             this.commitTxPrevOutputFetcher.push(commitTxPrevOutput.amount);
             totalSenderAmount += commitTxPrevOutput.amount;
         });
+
         this.inscriptionTxCtxDataList.forEach(inscriptionTxCtxData => {
             tx.addOutput(inscriptionTxCtxData.revealTxPrevOutput.pkScript, inscriptionTxCtxData.revealTxPrevOutput.value);
         });
