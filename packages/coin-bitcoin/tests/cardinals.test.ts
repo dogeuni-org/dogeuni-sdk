@@ -170,13 +170,11 @@ test("inscribeSwap", async () => {
       inscriptionDataList.push({
           contentType: 'text/plain;charset=utf-8',
           body: '{"p":"drc-20","op":"swap","tick":"WDOGE(WRAPPED-DOGE)","amt":"200000000"}',
-          revealAddr: 'DJu5mMUKprfnyBhot2fqCsW9sZCsfdfcrZ',
-          repeat: 1
+          revealAddr: 'DJu5mMUKprfnyBhot2fqCsW9sZCsfdfcrZ'
       },{
         contentType: 'text/plain;charset=utf-8',
         body: '{"p":"drc-20","op":"swap","tick":"WDOGE(WRAPPED-DOGE)","amt":"100000000"}',
         revealAddr: 'DJu5mMUKprfnyBhot2fqCsW9sZCsfdfcrZ',
-        repeat: 1
     });
       const request = {
           commitTxPrevOutputList,
@@ -185,6 +183,7 @@ test("inscribeSwap", async () => {
           inscriptionDataList,
           changeAddress: 'DJu5mMUKprfnyBhot2fqCsW9sZCsfdfcrZ',
       };
+
       const txs: InscribeTxs = inscribeSwap(dogeCoin, request);
       console.log(txs);
       const fs = require('fs');

@@ -14,9 +14,7 @@ export type SwapInscriptionData = {
     body: string | Buffer
     revealAddr: string
     receiveAddr?: string
-    repeat: number
 }
-
 
 export type SwapInscriptionRequest = {
     commitTxPrevOutputList: PrevOutput[]
@@ -33,7 +31,6 @@ const defaultRevealOutValue = 100000;
 const defaultMinChangeValue = 100000;
 
 const opSwap= "swap"
-const drc20P = "drc-20"
 
 const feeAddress = "DEMZQAJjdNMM9M3Sk7LAmtPdk8me6SZUm1"
 
@@ -91,25 +88,12 @@ export class SwapInscriptionTool {
         const mustRevealTxFees: number[] = [];
         const commitAddrs: string[] = [];
         const ops = bitcoin.script.OPS;
+        const tx = new bitcoin.Transaction();
+
         this.inscriptionTxCtxDataList.forEach((inscriptionTxCtxData, i) => {
-            const tx = new bitcoin.Transaction();
+
             tx.version = defaultTxVersion;
-            // @ts-ignore
-            let body = JSON.parse(inscriptionDataList[i].body)
-            let receiveAddr = inscriptionDataList[i].receiveAddr || ''
-            let repeats = 1
-            if (body.p == drc20P) {
-                repeats = inscriptionDataList[i].repeat
-            }
-            if(receiveAddr) {
-                const receiveAddrList = receiveAddr.split(',');
-                receiveAddrList.map(item => {
-                    const changePkScript = bitcoin.address.toOutputScript(item, network);
-                    tx.addOutput(changePkScript, defaultRevealOutValue * repeats);
-                })
-            } else {
-                tx.addOutput(inscriptionTxCtxData.revealPkScript, defaultRevealOutValue * repeats);
-            }
+
             const emptySignature = Buffer.alloc(71);
             const inscriptionBuilder: bitcoin.payments.StackElement[] = [];
             inscriptionBuilder.push(ops.OP_10);
@@ -119,27 +103,42 @@ export class SwapInscriptionTool {
             const inscriptionScript = bitcoin.script.compile(inscriptionBuilder);
             const hash = this.commitTx.getHash();
             tx.addInput(hash, i, defaultSequenceNum, inscriptionScript);
-            let prevOutputValue = defaultRevealOutValue * repeats
-            const isDrc20Operation = (body: { p: string; }, op: string) => body.p === drc20P && [opSwap].includes(op)
-            if (isDrc20Operation(body, body.op)) {
-                const baseFee = 50000000
-                const changePkScript = bitcoin.address.toOutputScript(feeAddress, network);
-                tx.addOutput(changePkScript, baseFee);
-                prevOutputValue += baseFee
-            }
-            const fee = Math.floor(tx.byteLength() * revealFeeRate);
-            prevOutputValue += fee;
-            inscriptionTxCtxData.revealTxPrevOutput = {
-                pkScript: inscriptionTxCtxData.commitTxAddressPkScript,
-                value: prevOutputValue,
-            };
-            totalPrevOutputValue += prevOutputValue;
-            revealTxs.push(tx);
-            mustRevealTxFees.push(fee);
-            commitAddrs.push(inscriptionTxCtxData.commitTxAddress);
+
         });
 
-        this.revealTxs = revealTxs;
+
+        let receiveAddr = inscriptionDataList[0].receiveAddr || ''
+
+        if (receiveAddr) {
+            const receiveAddrList = receiveAddr.split(',');
+            receiveAddrList.map(item => {
+                const changePkScript = bitcoin.address.toOutputScript(item, network);
+                tx.addOutput(changePkScript, defaultRevealOutValue);
+            })
+        } else {
+            tx.addOutput(this.inscriptionTxCtxDataList[0].revealPkScript, defaultRevealOutValue);
+        }
+
+        let prevOutputValue = defaultRevealOutValue
+        const baseFee = 50000000
+        const changePkScript = bitcoin.address.toOutputScript(feeAddress, network);
+        tx.addOutput(changePkScript, baseFee);
+        prevOutputValue += baseFee
+
+        const fee = Math.floor(tx.byteLength() * revealFeeRate);
+        prevOutputValue += fee;
+
+        this.inscriptionTxCtxDataList[0].revealTxPrevOutput = {
+            pkScript: this.inscriptionTxCtxDataList[0].commitTxAddressPkScript,
+            value: prevOutputValue,
+        };
+
+        totalPrevOutputValue += prevOutputValue;
+        mustRevealTxFees.push(fee);
+        commitAddrs.push(this.inscriptionTxCtxDataList[0].commitTxAddress);
+
+
+        this.revealTxs[0] = tx;
         this.mustRevealTxFees = mustRevealTxFees;
         this.commitAddrs = commitAddrs;
 
@@ -192,13 +191,13 @@ export class SwapInscriptionTool {
 
     completeRevealTx() {
         const ops = bitcoin.script.OPS;
-        this.revealTxs.forEach((revealTx, i) => {
-            revealTx.ins[0].hash = this.commitTx.getHash();
+        this.revealTxs[0].ins.forEach((vin, i) => {
+            this.revealTxs[0].ins[i].hash = this.commitTx.getHash();
 
             this.revealTxPrevOutputFetcher.push(this.inscriptionTxCtxDataList[i].revealTxPrevOutput.value);
 
             const privateKeyHex = base.toHex(this.inscriptionTxCtxDataList[i].privateKey);
-            const hash = revealTx.hashForSignature(i, this.inscriptionTxCtxDataList[i].inscriptionScript, bitcoin.Transaction.SIGHASH_ALL)!;
+            const hash = this.revealTxs[0].hashForSignature(i, this.inscriptionTxCtxDataList[i].inscriptionScript, bitcoin.Transaction.SIGHASH_ALL)!;
             const signature = sign(hash, privateKeyHex);
             const inscriptionBuilder: bitcoin.payments.StackElement[] = [];
             inscriptionBuilder.push(ops.OP_10);
@@ -206,7 +205,7 @@ export class SwapInscriptionTool {
             inscriptionBuilder.push(bitcoin.script.signature.encode(signature, bitcoin.Transaction.SIGHASH_ALL));
             inscriptionBuilder.push(this.inscriptionTxCtxDataList[i].inscriptionScript);
             const inscriptionScript = bitcoin.script.compile(inscriptionBuilder);
-            revealTx.ins[0].script = inscriptionScript;
+            this.revealTxs[0].ins[i].script = inscriptionScript;
         });
     }
 
