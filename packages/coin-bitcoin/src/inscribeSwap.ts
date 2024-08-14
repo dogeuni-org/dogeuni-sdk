@@ -90,9 +90,6 @@ export class SwapInscriptionTool {
         const ops = bitcoin.script.OPS;
         const tx = new bitcoin.Transaction();
         let prevOutputValue = defaultRevealOutValue
-        const fee = Math.floor(tx.byteLength() * revealFeeRate);
-        prevOutputValue += fee;
-
         this.inscriptionTxCtxDataList.forEach((inscriptionTxCtxData, i) => {
 
             tx.version = defaultTxVersion;
@@ -106,7 +103,8 @@ export class SwapInscriptionTool {
             const inscriptionScript = bitcoin.script.compile(inscriptionBuilder);
             const hash = this.commitTx.getHash();
             tx.addInput(hash, i, defaultSequenceNum, inscriptionScript);
-
+            const fee = Math.floor(tx.byteLength() * revealFeeRate);
+            prevOutputValue += fee;
             inscriptionTxCtxData.revealTxPrevOutput = {
                 pkScript: inscriptionTxCtxData.commitTxAddressPkScript,
                 value: prevOutputValue,
@@ -119,24 +117,15 @@ export class SwapInscriptionTool {
         });
 
 
-        let receiveAddr = inscriptionDataList[0].receiveAddr || ''
-
-        if (receiveAddr) {
-            const receiveAddrList = receiveAddr.split(',');
-            receiveAddrList.map(item => {
-                const changePkScript = bitcoin.address.toOutputScript(item, network);
-                tx.addOutput(changePkScript, defaultRevealOutValue);
-            })
-        } else {
-            tx.addOutput(this.inscriptionTxCtxDataList[0].revealPkScript, defaultRevealOutValue);
-        }
+        tx.addOutput(this.inscriptionTxCtxDataList[0].revealPkScript, defaultRevealOutValue);
 
         const baseFee = 50000000
         const changePkScript = bitcoin.address.toOutputScript(feeAddress, network);
         tx.addOutput(changePkScript, baseFee);
         prevOutputValue += baseFee
-
-        this.revealTxs[0] = tx;
+        // this.revealTxs[0] = tx;
+        revealTxs.push(tx)
+        this.revealTxs = revealTxs;
         this.mustRevealTxFees = mustRevealTxFees;
         this.commitAddrs = commitAddrs;
 
@@ -157,9 +146,10 @@ export class SwapInscriptionTool {
         });
 
         this.inscriptionTxCtxDataList.forEach(inscriptionTxCtxData => {
+            console.log(inscriptionTxCtxData.revealTxPrevOutput, '----revealTxPrevOutput----')
             tx.addOutput(inscriptionTxCtxData.revealTxPrevOutput.pkScript, inscriptionTxCtxData.revealTxPrevOutput.value);
         });
-
+        console.log(tx, '----tx----')
         const changePkScript = bitcoin.address.toOutputScript(changeAddress, network);
         tx.addOutput(changePkScript, 0);
 
@@ -167,7 +157,7 @@ export class SwapInscriptionTool {
         signTx(txForEstimate, commitTxPrevOutputList, this.network);
 
         const fee = Math.floor(txForEstimate.virtualSize() * commitFeeRate);
-        const changeAmount = totalSenderAmount - totalRevealPrevOutputValue - fee * 2;
+        const changeAmount = totalSenderAmount - totalRevealPrevOutputValue - fee;
         if (changeAmount >= minChangeValue) {
             tx.outs[tx.outs.length - 1].value = changeAmount;
         } else {
