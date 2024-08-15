@@ -181,7 +181,7 @@ export class SwapInscriptionTool {
     completeRevealTx() {
         const ops = bitcoin.script.OPS;
         this.revealTxs[0].ins.forEach((vin, i) => {
-            this.revealTxs[0].ins[i].hash = this.commitTx.getHash();
+            vin.hash = this.commitTx.getHash();
 
             this.revealTxPrevOutputFetcher.push(this.inscriptionTxCtxDataList[i].revealTxPrevOutput.value);
 
@@ -194,7 +194,7 @@ export class SwapInscriptionTool {
             inscriptionBuilder.push(bitcoin.script.signature.encode(signature, bitcoin.Transaction.SIGHASH_ALL));
             inscriptionBuilder.push(this.inscriptionTxCtxDataList[i].inscriptionScript);
             const inscriptionScript = bitcoin.script.compile(inscriptionBuilder);
-            this.revealTxs[0].ins[i].script = inscriptionScript;
+            vin.script = inscriptionScript;
         });
     }
 
