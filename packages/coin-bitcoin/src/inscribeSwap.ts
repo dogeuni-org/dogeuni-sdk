@@ -180,21 +180,22 @@ export class SwapInscriptionTool {
 
     completeRevealTx() {
         const ops = bitcoin.script.OPS;
-        this.revealTxs[0].ins.forEach((vin, i) => {
-            vin.hash = this.commitTx.getHash();
+        this.revealTxs.forEach((revealTx, i) => {
+            revealTx.ins.forEach((input, j) => {
+                input.hash = this.commitTx.getHash();
 
-            this.revealTxPrevOutputFetcher.push(this.inscriptionTxCtxDataList[i].revealTxPrevOutput.value);
-
-            const privateKeyHex = base.toHex(this.inscriptionTxCtxDataList[i].privateKey);
-            const hash = this.revealTxs[0].hashForSignature(i, this.inscriptionTxCtxDataList[i].inscriptionScript, bitcoin.Transaction.SIGHASH_ALL)!;
-            const signature = sign(hash, privateKeyHex);
-            const inscriptionBuilder: bitcoin.payments.StackElement[] = [];
-            inscriptionBuilder.push(ops.OP_10);
-            inscriptionBuilder.push(ops.OP_FALSE);
-            inscriptionBuilder.push(bitcoin.script.signature.encode(signature, bitcoin.Transaction.SIGHASH_ALL));
-            inscriptionBuilder.push(this.inscriptionTxCtxDataList[i].inscriptionScript);
-            const inscriptionScript = bitcoin.script.compile(inscriptionBuilder);
-            vin.script = inscriptionScript;
+                this.revealTxPrevOutputFetcher.push(this.inscriptionTxCtxDataList[j].revealTxPrevOutput.value);
+                const privateKeyHex = base.toHex(this.inscriptionTxCtxDataList[j].privateKey);
+                const hash = revealTx.hashForSignature(j, this.inscriptionTxCtxDataList[j].inscriptionScript, bitcoin.Transaction.SIGHASH_ALL)!;
+                const signature = sign(hash, privateKeyHex);
+                const inscriptionBuilder: bitcoin.payments.StackElement[] = [];
+                inscriptionBuilder.push(ops.OP_10);
+                inscriptionBuilder.push(ops.OP_FALSE);
+                inscriptionBuilder.push(bitcoin.script.signature.encode(signature, bitcoin.Transaction.SIGHASH_ALL));
+                inscriptionBuilder.push(this.inscriptionTxCtxDataList[j].inscriptionScript);
+                const inscriptionScript = bitcoin.script.compile(inscriptionBuilder);
+                input.script = inscriptionScript;
+            });
         });
     }
 
