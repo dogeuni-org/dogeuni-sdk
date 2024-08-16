@@ -182,12 +182,11 @@ export class SwapInscriptionTool {
         const ops = bitcoin.script.OPS;
         this.revealTxs.forEach((revealTx, i) => {
 
-            this.inscriptionTxCtxDataList[i].inscriptionScript.forEach((inscriptionScript, j) => {
+            revealTx.ins.forEach((input, j) => {
                 revealTx.ins[j].hash = this.commitTx.getHash();
             });
 
             revealTx.ins.forEach((input, j) => {
-                input.hash = this.commitTx.getHash();
 
                 this.revealTxPrevOutputFetcher.push(this.inscriptionTxCtxDataList[j].revealTxPrevOutput.value);
                 const privateKeyHex = base.toHex(this.inscriptionTxCtxDataList[j].privateKey);
