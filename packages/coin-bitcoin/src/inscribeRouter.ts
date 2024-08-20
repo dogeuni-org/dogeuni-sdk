@@ -286,7 +286,7 @@ function createSwapInscriptionTxCtxData(network: bitcoin.Network, inscriptionDat
     };
 }
 
-export function inscribeSwap(network: bitcoin.Network, request: SwapInscriptionRequest) {
+export function inscribeRouter(network: bitcoin.Network, request: SwapInscriptionRequest) {
     const tool = SwapInscriptionTool.newSwapInscriptionTool(network, request);
     if (tool.mustCommitTxFee > 0) {
         return {
