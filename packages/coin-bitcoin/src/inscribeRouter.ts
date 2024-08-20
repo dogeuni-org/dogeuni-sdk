@@ -9,18 +9,18 @@ import {
 } from "./txBuild";
 import {PrevOutput} from "./inscribe";
 
-export type SwapInscriptionData = {
+export type RouterInscriptionData = {
     contentType: string
     body: string | Buffer
     revealAddr: string
     receiveAddr?: string
 }
 
-export type SwapInscriptionRequest = {
+export type RouterInscriptionRequest = {
     commitTxPrevOutputList: PrevOutput[]
     commitFeeRate: number
     revealFeeRate: number
-    inscriptionDataList: SwapInscriptionData[]
+    inscriptionDataList: RouterInscriptionData[]
     changeAddress: string
     minChangeValue?: number
 }
@@ -30,28 +30,26 @@ const defaultSequenceNum = 0xfffffffd;
 const defaultRevealOutValue = 100000;
 const defaultMinChangeValue = 100000;
 
-const opSwap= "swap"
-
 const feeAddress = "DEMZQAJjdNMM9M3Sk7LAmtPdk8me6SZUm1"
 
-type SwapTxOut = {
+type RouterTxOut = {
     pkScript: Buffer
     value: number
 }
 
-type SwapInscriptionTxCtxData = {
+type RouterInscriptionTxCtxData = {
     privateKey: Buffer
     inscriptionScript: Buffer
     commitTxAddress: string
     commitTxAddressPkScript: Buffer
     hash: Buffer
-    revealTxPrevOutput: SwapTxOut
+    revealTxPrevOutput: RouterTxOut
     revealPkScript: Buffer
 }
 
-export class SwapInscriptionTool {
+export class RouterInscriptionTool {
     network: bitcoin.Network = bitcoin.networks.bitcoin;
-    inscriptionTxCtxDataList: SwapInscriptionTxCtxData[] = [];
+    inscriptionTxCtxDataList: RouterInscriptionTxCtxData[] = [];
     revealTxs: bitcoin.Transaction[] = [];
     commitTx: bitcoin.Transaction = new bitcoin.Transaction();
     commitTxPrevOutputFetcher: number[] = [];
@@ -60,8 +58,8 @@ export class SwapInscriptionTool {
     mustRevealTxFees: number[] = [];
     commitAddrs: string[] = [];
 
-    static newSwapInscriptionTool(network: bitcoin.Network, request: SwapInscriptionRequest) {
-        const tool = new SwapInscriptionTool();
+    static newRouterInscriptionTool(network: bitcoin.Network, request: RouterInscriptionRequest) {
+        const tool = new RouterInscriptionTool();
         tool.network = network;
 
         const minChangeValue = request.minChangeValue || defaultMinChangeValue;
@@ -69,7 +67,7 @@ export class SwapInscriptionTool {
         // TODO: use commitTx first input privateKey
         const privateKey = request.commitTxPrevOutputList[0].privateKey;
         request.inscriptionDataList.forEach(inscriptionData => {
-            tool.inscriptionTxCtxDataList.push(createSwapInscriptionTxCtxData(network, inscriptionData, privateKey));
+            tool.inscriptionTxCtxDataList.push(createRouterInscriptionTxCtxData(network, inscriptionData, privateKey));
         });
         const totalRevealPrevOutputValue = tool.buildEmptyRevealTx(network, request.revealFeeRate, request.inscriptionDataList);
         const insufficient = tool.buildCommitTx(network, request.commitTxPrevOutputList, request.changeAddress, totalRevealPrevOutputValue, request.commitFeeRate, minChangeValue);
@@ -82,7 +80,7 @@ export class SwapInscriptionTool {
         return tool;
     }
 
-    buildEmptyRevealTx(network: bitcoin.Network, revealFeeRate: number, inscriptionDataList: SwapInscriptionData[]) {
+    buildEmptyRevealTx(network: bitcoin.Network, revealFeeRate: number, inscriptionDataList: RouterInscriptionData[]) {
         let totalPrevOutputValue = 0;
         const revealTxs: bitcoin.Transaction[] = [];
         const mustRevealTxFees: number[] = [];
@@ -116,7 +114,7 @@ export class SwapInscriptionTool {
             commitAddrs.push(inscriptionTxCtxData.commitTxAddress);
 
         });
-            
+
         tx.addOutput(this.inscriptionTxCtxDataList[0].revealPkScript, defaultRevealOutValue);
 
         const baseFee = 50000000
@@ -247,7 +245,7 @@ function signTx(tx: bitcoin.Transaction, commitTxPrevOutputList: PrevOutput[], n
     });
 }
 
-function createSwapInscriptionTxCtxData(network: bitcoin.Network, inscriptionData: SwapInscriptionData, privateKeyWif: string): SwapInscriptionTxCtxData {
+function createRouterInscriptionTxCtxData(network: bitcoin.Network, inscriptionData: RouterInscriptionData, privateKeyWif: string): RouterInscriptionTxCtxData {
     const privateKey = base.fromHex(privateKeyFromWIF(privateKeyWif, network));
     const pubKey = wif2Public(privateKeyWif, network);
     const ops = bitcoin.script.OPS;
@@ -286,8 +284,8 @@ function createSwapInscriptionTxCtxData(network: bitcoin.Network, inscriptionDat
     };
 }
 
-export function inscribeRouter(network: bitcoin.Network, request: SwapInscriptionRequest) {
-    const tool = SwapInscriptionTool.newSwapInscriptionTool(network, request);
+export function inscribeRouter(network: bitcoin.Network, request: RouterInscriptionRequest) {
+    const tool = RouterInscriptionTool.newRouterInscriptionTool(network, request);
     if (tool.mustCommitTxFee > 0) {
         return {
             commitTx: "",

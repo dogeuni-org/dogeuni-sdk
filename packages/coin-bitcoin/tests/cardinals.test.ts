@@ -10,7 +10,7 @@ import {
   transaction,
   TransactionData,
   TransactionTxs,
-  SwapInscriptionData,
+  RouterInscriptionData,
 } from "../src";
 
 import { base } from "@unielon/crypto-lib";
@@ -94,7 +94,7 @@ describe("cardinals test", () => {
           address: "DH5RX8yrAS38VCKQyVuicmmf8VvvztZvJM",
           privateKey: privateKey,
       });
-      
+
       const inscriptionDataList: FileInscriptionData[] = [];
       inscriptionDataList.push({
           contentType: 'text/plain;charset=utf-8',
@@ -130,7 +130,7 @@ describe("cardinals test", () => {
         address: "DH5RX8yrAS38VCKQyVuicmmf8VvvztZvJM",
         privateKey: privateKey,
     });
-    
+
     const inscriptionDataList: FileInscriptionData[] = [];
     inscriptionDataList.push({
         contentType: 'text/plain;charset=utf-8',
@@ -156,7 +156,7 @@ describe("cardinals test", () => {
 
 });
 
-test("inscribeSwap", async () => {
+test("inscribeRouter", async () => {
       let privateKey = "QRJx7uvj55L3oVRADWJfFjJ31H9Beg75xZ2GcmR8rKFNHA4ZacKJ"
       const commitTxPrevOutputList: PrevOutput[] = [];
       commitTxPrevOutputList.push({
@@ -166,7 +166,7 @@ test("inscribeSwap", async () => {
           address: "DJu5mMUKprfnyBhot2fqCsW9sZCsfdfcrZ",
           privateKey: privateKey,
       });
-      const inscriptionDataList: SwapInscriptionData[] = [];
+      const inscriptionDataList: RouterInscriptionData[] = [];
       inscriptionDataList.push({
           contentType: 'text/plain;charset=utf-8',
           body: '{"p":"drc-20","op":"swap","tick":"WDOGE(WRAPPED-DOGE)","amt":"200000000"}',
@@ -186,9 +186,9 @@ test("inscribeSwap", async () => {
 
       const txs: InscribeTxs = inscribeRouter(dogeCoin, request);
       console.log(txs);
-      const fs = require('fs');
-      const longHash = txs.revealTxs[0];
-      fs.writeFileSync('hash_output.txt', longHash);
+      // const fs = require('fs');
+      // const longHash = txs.revealTxs[0];
+      // fs.writeFileSync('hash_output.txt', longHash);
   });
 
 })
