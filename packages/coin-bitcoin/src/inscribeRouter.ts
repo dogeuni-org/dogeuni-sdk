@@ -144,10 +144,9 @@ export class RouterInscriptionTool {
         });
 
         this.inscriptionTxCtxDataList.forEach(inscriptionTxCtxData => {
-            console.log(inscriptionTxCtxData.revealTxPrevOutput, '----revealTxPrevOutput----')
             tx.addOutput(inscriptionTxCtxData.revealTxPrevOutput.pkScript, inscriptionTxCtxData.revealTxPrevOutput.value);
         });
-        console.log(tx, '----tx----')
+
         const changePkScript = bitcoin.address.toOutputScript(changeAddress, network);
         tx.addOutput(changePkScript, 0);
 
