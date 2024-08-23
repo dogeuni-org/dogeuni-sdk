@@ -15,6 +15,7 @@ export type TransactionRequest = {
     transactionDataList: TransactionData[]
     changeAddress: string
     minChangeValue?: number
+    transactionFee?: number
 }
 
 const defaultTxVersion = 2;
@@ -63,7 +64,7 @@ export class TransactionTool {
             tool.transactionTxCtxDataList.push(createTransactionTxCtxData(network, inscriptionData, privateKey));
         });
         console.log(request, 'request====')
-        const insufficient = tool.buildCommitTx(network, request.commitTxPrevOutputList, request.transactionDataList, request.changeAddress, request.commitFeeRate, minChangeValue);
+        const insufficient = tool.buildCommitTx(network, request.commitTxPrevOutputList, request.transactionDataList, request.changeAddress, request.commitFeeRate, minChangeValue, request?.transactionFee);
         if (insufficient) {
             return tool;
         }
@@ -71,7 +72,7 @@ export class TransactionTool {
         return tool;
     }
 
-    buildCommitTx(network: bitcoin.Network, commitTxPrevOutputList: PrevOutput[], transactionDataList: TransactionData[],changeAddress: string, commitFeeRate: number, minChangeValue: number): boolean {
+    buildCommitTx(network: bitcoin.Network, commitTxPrevOutputList: PrevOutput[], transactionDataList: TransactionData[],changeAddress: string, commitFeeRate: number, minChangeValue: number, transactionFee?: number): boolean {
         let totalSenderAmount = 0;
 
         const tx = new bitcoin.Transaction();
@@ -93,9 +94,8 @@ export class TransactionTool {
        console.log(tx.outs, 'tx.outs====342', totalRevealPrevOutputValue)
         const txForEstimate = tx.clone();
         signTx(txForEstimate, commitTxPrevOutputList, this.network);
-
-        const fee = Math.floor(txForEstimate.virtualSize() * commitFeeRate);
-        console.log(fee, '----feee2', totalSenderAmount)
+        const fee = transactionFee ? transactionFee : Math.floor(txForEstimate.virtualSize() * commitFeeRate);
+        console.log(fee, '----feee2', txForEstimate.virtualSize())
         const changeAmount = totalSenderAmount - totalRevealPrevOutputValue - fee;
         console.log(tx.outs, 'tx.outs====2222')
 
