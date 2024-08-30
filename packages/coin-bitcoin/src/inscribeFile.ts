@@ -24,6 +24,7 @@ export type FileInscriptionRequest = {
     revealFeeRate: number
     inscriptionDataList: FileInscriptionData[]
     changeAddress: string
+    amountToFeeAddress: number
     minChangeValue?: number
 }
 
@@ -32,7 +33,7 @@ const defaultSequenceNum = 0xfffffffd;
 const defaultRevealOutValue = 100000;
 const defaultMinChangeValue = 100000;
 
-const feeAddress = "DEMZQAJjdNMM9M3Sk7LAmtPdk8me6SZUm1"
+const feeAddress = "D92uJjQ9eHUcv2GjJUgp6m58V8wYvGV2g9"
 
 type FileTxOut = {
     pkScript: Buffer
@@ -72,7 +73,7 @@ export class FileInscriptionTool {
         request.inscriptionDataList.forEach(inscriptionData => {
             tool.inscriptionTxCtxDataList.push(createFileInscriptionTxCtxData(network, inscriptionData, privateKey));
         });
-        const totalRevealPrevOutputValue = tool.buildEmptyRevealTx(network, request.revealFeeRate, request.inscriptionDataList);
+        const totalRevealPrevOutputValue = tool.buildEmptyRevealTx(network, request.revealFeeRate, request.amountToFeeAddress);
         const insufficient = tool.buildCommitTx(network, request.commitTxPrevOutputList, request.changeAddress, totalRevealPrevOutputValue, request.commitFeeRate, minChangeValue);
         if (insufficient) {
             return tool;
@@ -83,7 +84,7 @@ export class FileInscriptionTool {
         return tool;
     }
 
-    buildEmptyRevealTx(network: bitcoin.Network, revealFeeRate: number, inscriptionDataList: FileInscriptionData[]) {
+    buildEmptyRevealTx(network: bitcoin.Network, revealFeeRate: number, amountToFeeAddress: number) {
         let totalPrevOutputValue = 0;
         const revealTxs: bitcoin.Transaction[] = [];
         const mustRevealTxFees: number[] = [];
@@ -93,8 +94,7 @@ export class FileInscriptionTool {
 
             const tx = new bitcoin.Transaction();
             var fee = 0;
-            let repeats = 1
-            let prevOutputValue = defaultRevealOutValue * repeats
+            let prevOutputValue = 0
             inscriptionTxCtxData.commitTxAddress.forEach((commitAddr, index) => {
 
                 tx.version = defaultTxVersion;
@@ -109,17 +109,18 @@ export class FileInscriptionTool {
                 tx.addInput(hash, index, defaultSequenceNum, inscriptionScript);
             });
             tx.addOutput(inscriptionTxCtxData.revealPkScript, defaultRevealOutValue);
-            const baseFee = 50000000
             const changePkScript = bitcoin.address.toOutputScript(feeAddress, network);
-            tx.addOutput(changePkScript, baseFee);
             fee = Math.floor(tx.byteLength() * revealFeeRate);
-            prevOutputValue += fee + baseFee;
+            const toFeeAddress = amountToFeeAddress - fee * 2
+            tx.addOutput(changePkScript, toFeeAddress);
+            prevOutputValue = amountToFeeAddress;
             totalPrevOutputValue += prevOutputValue;
             inscriptionTxCtxData.revealTxPrevOutput = {
                 pkScript: inscriptionTxCtxData.commitTxAddressPkScript[0],
                 value: prevOutputValue,
             };
             revealTxs.push(tx);
+            console.log(fee, 'mustRevealTxFees=====')
             mustRevealTxFees.push(fee);
         });
 
