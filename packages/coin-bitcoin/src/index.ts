@@ -12,4 +12,4 @@ export * as message from "./message"
 export * from "./BtcWallet"
 export * from "./onekey"
 export * from "./transaction"
-
+export * from "./computeRoutePath"
