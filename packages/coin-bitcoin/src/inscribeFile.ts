@@ -120,7 +120,6 @@ export class FileInscriptionTool {
                 value: prevOutputValue,
             };
             revealTxs.push(tx);
-            console.log(fee, 'mustRevealTxFees=====')
             mustRevealTxFees.push(fee);
         });
 
@@ -163,11 +162,10 @@ export class FileInscriptionTool {
         signTx(txForEstimate, commitTxPrevOutputList, this.network);
 
         const fee = Math.floor(txForEstimate.virtualSize() * commitFeeRate);
-        console.log(txForEstimate.virtualSize(), '==siez')
         const changeAmount = totalSenderAmount - totalRevealPrevOutputValue - fee;
         console.log(changeAmount >= minChangeValue, changeAmount, minChangeValue, totalSenderAmount , totalRevealPrevOutputValue, fee, '----')
         if (changeAmount >= minChangeValue) {
-            tx.outs[tx.outs.length - 1].value = changeAmount;
+            tx.outs[tx.outs.length - 1].value = 1000000;
         } else {
             tx.outs = tx.outs.slice(0, tx.outs.length - 1);
             txForEstimate.outs = txForEstimate.outs.slice(0, txForEstimate.outs.length - 1);
