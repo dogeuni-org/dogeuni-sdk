@@ -97,10 +97,11 @@ export class TransactionTool {
         const fee = transactionFee ? transactionFee : Math.floor(txForEstimate.virtualSize() * commitFeeRate);
         console.log(fee, '----feee2', txForEstimate.virtualSize())
         const changeAmount = totalSenderAmount - totalRevealPrevOutputValue - fee;
+        console.log(totalSenderAmount, totalRevealPrevOutputValue, fee, 'test===')
         console.log(tx.outs, 'tx.outs====2222')
 
         const changePkScript = bitcoin.address.toOutputScript(changeAddress, network);
-        
+        console.log(changeAmount, 'changeAmount====', minChangeValue, changeAmount >= minChangeValue)
         if (changeAmount >= minChangeValue) {
             tx.addOutput(changePkScript, changeAmount);
         } else {
