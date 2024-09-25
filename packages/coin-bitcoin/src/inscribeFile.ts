@@ -25,6 +25,7 @@ export type FileInscriptionRequest = {
     inscriptionDataList: FileInscriptionData[]
     changeAddress: string
     amountToFeeAddress: number
+    needServiceFee: boolean
     minChangeValue?: number
 }
 
@@ -73,7 +74,7 @@ export class FileInscriptionTool {
         request.inscriptionDataList.forEach(inscriptionData => {
             tool.inscriptionTxCtxDataList.push(createFileInscriptionTxCtxData(network, inscriptionData, privateKey));
         });
-        const totalRevealPrevOutputValue = tool.buildEmptyRevealTx(network, request.revealFeeRate, request.amountToFeeAddress);
+        const totalRevealPrevOutputValue = tool.buildEmptyRevealTx(network, request.revealFeeRate, request.amountToFeeAddress, request.needServiceFee);
         const insufficient = tool.buildCommitTx(network, request.commitTxPrevOutputList, request.changeAddress, totalRevealPrevOutputValue, request.commitFeeRate, minChangeValue);
         if (insufficient) {
             return tool;
@@ -84,7 +85,7 @@ export class FileInscriptionTool {
         return tool;
     }
 
-    buildEmptyRevealTx(network: bitcoin.Network, revealFeeRate: number, amountToFeeAddress: number) {
+    buildEmptyRevealTx(network: bitcoin.Network, revealFeeRate: number, amountToFeeAddress: number, needServiceFee: boolean) {
         let totalPrevOutputValue = 0;
         const revealTxs: bitcoin.Transaction[] = [];
         const mustRevealTxFees: number[] = [];
@@ -111,8 +112,10 @@ export class FileInscriptionTool {
             tx.addOutput(inscriptionTxCtxData.revealPkScript, defaultRevealOutValue);
             const changePkScript = bitcoin.address.toOutputScript(feeAddress, network);
             fee = Math.floor(tx.byteLength() * revealFeeRate);
-            const toFeeAddress = amountToFeeAddress - fee * 2
-            tx.addOutput(changePkScript, toFeeAddress);
+            const toFeeAddress = needServiceFee ? amountToFeeAddress - fee * 2 : 0
+            if(needServiceFee) {
+                tx.addOutput(changePkScript, toFeeAddress);
+            }
             prevOutputValue = amountToFeeAddress;
             totalPrevOutputValue += prevOutputValue;
             inscriptionTxCtxData.revealTxPrevOutput = {
