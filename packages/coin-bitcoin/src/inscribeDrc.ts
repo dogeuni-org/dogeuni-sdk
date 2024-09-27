@@ -330,9 +330,12 @@ export function inscribeDrc(network: bitcoin.Network, request: DrcInscriptionReq
             commitAddrs: tool.commitAddrs,
         };
     }
-
+    const hash = tool.revealTxs[0].getHash();
+    const hexString = Buffer.from(hash).reverse().toString('hex');
+    console.log(hexString, 'hexString1');
     return {
         commitTx: tool.commitTx.toHex(),
+        commitTxHash: hexString,
         revealTxs: tool.revealTxs.map(revealTx => revealTx.toHex()),
         ...tool.calculateFee(),
         commitAddrs: tool.commitAddrs,
