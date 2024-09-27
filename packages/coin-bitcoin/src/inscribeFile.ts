@@ -318,15 +318,14 @@ function createFileInscriptionTxCtxData(network: bitcoin.Network, inscriptionDat
     }
 
     imageDatas.push(Buffer.from(""));
-
-    if (inscriptionData.file.length > 1350 ){
+    console.log(inscriptionData.file.length, 'inscriptionData.file.length')
+    // if (inscriptionData.file.length > 1350 ){
         let body = inscriptionData.file;
         let index = 0;
         let bodyLength = body.length;
         while (bodyLength > 0){
             let bodyPart = body.slice(index, index + 1350);
             let inscriptionBuilder: bitcoin.payments.StackElement[] = [];
-            // const inscriptionBuilder: bitcoin.payments.StackElement[] = [];
             inscriptionBuilder.push(ops.OP_1);
             inscriptionBuilder.push(pubKey);
             inscriptionBuilder.push(ops.OP_1);
@@ -371,7 +370,7 @@ function createFileInscriptionTxCtxData(network: bitcoin.Network, inscriptionDat
             index += 1350;
             bodyLength -= 1350;
         }
-    }
+    // }
 
     return {
         privateKey,
