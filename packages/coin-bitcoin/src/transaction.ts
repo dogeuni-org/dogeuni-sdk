@@ -102,8 +102,10 @@ export class TransactionTool {
 
         const changePkScript = bitcoin.address.toOutputScript(changeAddress, network);
         console.log(changeAmount, 'changeAmount====', minChangeValue, changeAmount >= minChangeValue)
-        if (changeAmount >= minChangeValue) {
-            tx.addOutput(changePkScript, changeAmount);
+        if (changeAmount >= 0) {
+            if(changeAmount > 0) {
+                tx.addOutput(changePkScript, changeAmount);
+            }
         } else {
             tx.outs = tx.outs.slice(0, tx.outs.length - 1);
             txForEstimate.outs = txForEstimate.outs.slice(0, txForEstimate.outs.length - 1);
