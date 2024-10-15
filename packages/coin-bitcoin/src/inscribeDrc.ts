@@ -25,6 +25,7 @@ export type DrcInscriptionRequest = {
     inscriptionDataList: DrcInscriptionData[]
     changeAddress: string
     minChangeValue?: number
+    transactionFee?: number
 }
 
 const defaultTxVersion = 2;
@@ -42,6 +43,7 @@ const wdogeP = "wdoge"
 const pairV1P = 'pair-v1'
 const stakeV1P = 'stake-v1'
 const orderV1P = 'order-v1'
+const orderV2P = 'order-v2'
 const boxV1P = 'box-v1'
 
 const wdogeFeeAddress = "D86Dc4n49LZDiXvB41ds2XaDAP1BFjP1qy"
@@ -87,7 +89,7 @@ export class DrcInscriptionTool {
             tool.inscriptionTxCtxDataList.push(createDrcInscriptionTxCtxData(network, inscriptionData, privateKey));
         });
         const totalRevealPrevOutputValue = tool.buildEmptyRevealTx(network, request.revealFeeRate, request.inscriptionDataList);
-        const insufficient = tool.buildCommitTx(network, request.commitTxPrevOutputList, request.changeAddress, totalRevealPrevOutputValue, request.commitFeeRate, minChangeValue);
+        const insufficient = tool.buildCommitTx(network, request.commitTxPrevOutputList, request.changeAddress, totalRevealPrevOutputValue, request.commitFeeRate, minChangeValue, request?.transactionFee);
         if (insufficient) {
             return tool;
         }
@@ -172,7 +174,7 @@ export class DrcInscriptionTool {
         return totalPrevOutputValue;
     }
 
-    buildCommitTx(network: bitcoin.Network, commitTxPrevOutputList: PrevOutput[], changeAddress: string, totalRevealPrevOutputValue: number, commitFeeRate: number, minChangeValue: number): boolean {
+    buildCommitTx(network: bitcoin.Network, commitTxPrevOutputList: PrevOutput[], changeAddress: string, totalRevealPrevOutputValue: number, commitFeeRate: number, minChangeValue: number, transactionFee?: number): boolean {
         let totalSenderAmount = 0;
 
         const tx = new bitcoin.Transaction();
@@ -194,8 +196,9 @@ export class DrcInscriptionTool {
         const txForEstimate = tx.clone();
         signTx(txForEstimate, commitTxPrevOutputList, this.network);
 
-        const fee = Math.floor(txForEstimate.virtualSize() * commitFeeRate);
+        const fee = transactionFee ? transactionFee : Math.floor(txForEstimate.virtualSize() * commitFeeRate);
         const changeAmount = totalSenderAmount - totalRevealPrevOutputValue - fee;
+        console.log(changeAmount, totalSenderAmount, totalRevealPrevOutputValue, fee, 'test===')
         if (changeAmount >= minChangeValue) {
             tx.outs[tx.outs.length - 1].value = changeAmount;
         } else {
@@ -321,6 +324,7 @@ function createDrcInscriptionTxCtxData(network: bitcoin.Network, inscriptionData
 
 export function inscribeDrc(network: bitcoin.Network, request: DrcInscriptionRequest) {
     const tool = DrcInscriptionTool.newDrcInscriptionTool(network, request);
+    console.log(tool.mustCommitTxFee, 'tool.mustCommitTxFee');
     if (tool.mustCommitTxFee > 0) {
         return {
             commitTx: "",
