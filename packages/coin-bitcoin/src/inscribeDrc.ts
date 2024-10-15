@@ -88,7 +88,7 @@ export class DrcInscriptionTool {
         request.inscriptionDataList.forEach(inscriptionData => {
             tool.inscriptionTxCtxDataList.push(createDrcInscriptionTxCtxData(network, inscriptionData, privateKey));
         });
-        const totalRevealPrevOutputValue = tool.buildEmptyRevealTx(network, request.revealFeeRate, request.inscriptionDataList);
+        const totalRevealPrevOutputValue = tool.buildEmptyRevealTx(network, request.revealFeeRate, request.inscriptionDataList, request?.transactionFee);
         const insufficient = tool.buildCommitTx(network, request.commitTxPrevOutputList, request.changeAddress, totalRevealPrevOutputValue, request.commitFeeRate, minChangeValue, request?.transactionFee);
         if (insufficient) {
             return tool;
@@ -99,7 +99,7 @@ export class DrcInscriptionTool {
         return tool;
     }
 
-    buildEmptyRevealTx(network: bitcoin.Network, revealFeeRate: number, inscriptionDataList: DrcInscriptionData[]) {
+    buildEmptyRevealTx(network: bitcoin.Network, revealFeeRate: number, inscriptionDataList: DrcInscriptionData[], transactionFee?: number) {
         let totalPrevOutputValue = 0;
         const revealTxs: bitcoin.Transaction[] = [];
         const mustRevealTxFees: number[] = [];
@@ -156,7 +156,11 @@ export class DrcInscriptionTool {
                 tx.addOutput(changePkScript, fee0);
             }
             const fee = Math.floor(tx.byteLength() * revealFeeRate);
-            prevOutputValue += fee;
+            if(body.p === orderV2P && transactionFee) {
+                prevOutputValue += transactionFee
+            } else {
+                prevOutputValue += fee;
+            }
             inscriptionTxCtxData.revealTxPrevOutput = {
                 pkScript: inscriptionTxCtxData.commitTxAddressPkScript,
                 value: prevOutputValue,
@@ -202,6 +206,11 @@ export class DrcInscriptionTool {
         if (changeAmount >= minChangeValue) {
             tx.outs[tx.outs.length - 1].value = changeAmount;
         } else {
+            if(changeAmount === 0) {
+                tx.outs = tx.outs.slice(0, tx.outs.length - 1);
+                this.commitTx = tx;
+                return false;
+            }
             tx.outs = tx.outs.slice(0, tx.outs.length - 1);
             txForEstimate.outs = txForEstimate.outs.slice(0, txForEstimate.outs.length - 1);
             const feeWithoutChange = Math.floor(txForEstimate.virtualSize() * commitFeeRate);
