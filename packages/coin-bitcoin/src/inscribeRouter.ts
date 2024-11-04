@@ -11,9 +11,10 @@ import {PrevOutput} from "./inscribe";
 
 export type RouterInscriptionData = {
     contentType: string
-    body: string | Buffer
+    body: string | Buffer | any
     revealAddr: string
     receiveAddr?: string
+    doge?: any
 }
 
 export type RouterInscriptionRequest = {
@@ -23,6 +24,7 @@ export type RouterInscriptionRequest = {
     inscriptionDataList: RouterInscriptionData[]
     changeAddress: string
     minChangeValue?: number
+    transactionFee?: number
 }
 
 const defaultTxVersion = 2;
@@ -31,7 +33,8 @@ const defaultRevealOutValue = 100000;
 const defaultMinChangeValue = 100000;
 
 const feeAddress = "DEMZQAJjdNMM9M3Sk7LAmtPdk8me6SZUm1"
-
+const wdogeFeeAddress = "D86Dc4n49LZDiXvB41ds2XaDAP1BFjP1qy"
+const wdogeCoolAddress = "DKMyk8cfSTGfnCVXfmo8gXta9F6gziu7Z5"
 type RouterTxOut = {
     pkScript: Buffer
     value: number
@@ -69,8 +72,8 @@ export class RouterInscriptionTool {
         request.inscriptionDataList.forEach(inscriptionData => {
             tool.inscriptionTxCtxDataList.push(createRouterInscriptionTxCtxData(network, inscriptionData, privateKey));
         });
-        const totalRevealPrevOutputValue = tool.buildEmptyRevealTx(network, request.revealFeeRate, request.inscriptionDataList);
-        const insufficient = tool.buildCommitTx(network, request.commitTxPrevOutputList, request.changeAddress, totalRevealPrevOutputValue, request.commitFeeRate, minChangeValue);
+        const totalRevealPrevOutputValue = tool.buildEmptyRevealTx(network, request.revealFeeRate, request.inscriptionDataList, request?.transactionFee);
+        const insufficient = tool.buildCommitTx(network, request.commitTxPrevOutputList, request.changeAddress, totalRevealPrevOutputValue, request.commitFeeRate, minChangeValue, request?.transactionFee);
         if (insufficient) {
             return tool;
         }
@@ -80,7 +83,7 @@ export class RouterInscriptionTool {
         return tool;
     }
 
-    buildEmptyRevealTx(network: bitcoin.Network, revealFeeRate: number, inscriptionDataList: RouterInscriptionData[]) {
+    buildEmptyRevealTx(network: bitcoin.Network, revealFeeRate: number, inscriptionDataList: RouterInscriptionData[], transactionFee?: number) {
         let totalPrevOutputValue = 0;
         const revealTxs: bitcoin.Transaction[] = [];
         const mustRevealTxFees: number[] = [];
@@ -88,11 +91,11 @@ export class RouterInscriptionTool {
         const ops = bitcoin.script.OPS;
         const tx = new bitcoin.Transaction();
         let prevOutputValue = defaultRevealOutValue
-
+        let totalSwapAmt = 0
+        let totalFee = 0
         this.inscriptionTxCtxDataList.forEach((inscriptionTxCtxData, i) => {
 
             tx.version = defaultTxVersion;
-
             const emptySignature = Buffer.alloc(71);
             const inscriptionBuilder: bitcoin.payments.StackElement[] = [];
             inscriptionBuilder.push(ops.OP_10);
@@ -102,26 +105,43 @@ export class RouterInscriptionTool {
             const inscriptionScript = bitcoin.script.compile(inscriptionBuilder);
             const hash = this.commitTx.getHash();
             tx.addInput(hash, i, defaultSequenceNum, inscriptionScript);
-            const fee = Math.floor(tx.byteLength() * revealFeeRate);
-            prevOutputValue += fee;
+            const isDoge = inscriptionDataList[i].doge;
+            const body = JSON.parse(inscriptionDataList[i].body)
+            let fee0 = 0
+            if (isDoge) {
+                let amt = parseInt(body.amt0)
+                totalSwapAmt += amt
+                if (Math.floor(amt * 3 / 1000) < 50000000) {
+                    fee0 = 50000000
+                } else {
+                    fee0 = Math.floor(amt * 3 / 1000)
+                }
+                totalFee += fee0
+            }
+            const fee = transactionFee ? transactionFee : Math.floor(tx.byteLength() * revealFeeRate);
+            prevOutputValue = +fee + (+body.amt0) + (+fee0);
             inscriptionTxCtxData.revealTxPrevOutput = {
                 pkScript: inscriptionTxCtxData.commitTxAddressPkScript,
                 value: prevOutputValue,
             };
-
             totalPrevOutputValue += prevOutputValue;
             mustRevealTxFees.push(fee);
             commitAddrs.push(inscriptionTxCtxData.commitTxAddress);
 
         });
-
+        if(totalSwapAmt && totalFee){
+            const coolPkScript = bitcoin.address.toOutputScript(wdogeCoolAddress, network);
+            tx.addOutput(coolPkScript, totalSwapAmt);
+            const feePkScript = bitcoin.address.toOutputScript(wdogeFeeAddress, network);
+            tx.addOutput(feePkScript, totalFee);
+        } else {
+            const baseFee = 50000000
+            const changePkScript = bitcoin.address.toOutputScript(feeAddress, network);
+            tx.addOutput(changePkScript, baseFee);
+        }
         tx.addOutput(this.inscriptionTxCtxDataList[0].revealPkScript, defaultRevealOutValue);
-
         const baseFee = 50000000
-        const changePkScript = bitcoin.address.toOutputScript(feeAddress, network);
-        tx.addOutput(changePkScript, baseFee);
         prevOutputValue += baseFee
-
         this.revealTxs[0] = tx;
         this.mustRevealTxFees = mustRevealTxFees;
         this.commitAddrs = commitAddrs;
@@ -130,7 +150,7 @@ export class RouterInscriptionTool {
     }
 
 
-    buildCommitTx(network: bitcoin.Network, commitTxPrevOutputList: PrevOutput[], changeAddress: string, totalRevealPrevOutputValue: number, commitFeeRate: number, minChangeValue: number): boolean {
+    buildCommitTx(network: bitcoin.Network, commitTxPrevOutputList: PrevOutput[], changeAddress: string, totalRevealPrevOutputValue: number, commitFeeRate: number, minChangeValue: number, transactionFee?: number): boolean {
         let totalSenderAmount = 0;
 
         const tx = new bitcoin.Transaction();
@@ -153,7 +173,7 @@ export class RouterInscriptionTool {
         const txForEstimate = tx.clone();
         signTx(txForEstimate, commitTxPrevOutputList, this.network);
 
-        const fee = Math.floor(txForEstimate.virtualSize() * commitFeeRate);
+        const fee = transactionFee ? transactionFee : Math.floor(txForEstimate.virtualSize() * commitFeeRate);
         const changeAmount = totalSenderAmount - totalRevealPrevOutputValue - fee;
         if (changeAmount >= minChangeValue) {
             tx.outs[tx.outs.length - 1].value = changeAmount;

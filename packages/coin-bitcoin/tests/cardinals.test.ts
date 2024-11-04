@@ -49,35 +49,36 @@ describe("cardinals test", () => {
 //         const txs: TransactionTxs = transaction(dogeCoin, request);
 //         console.log(txs);
 //     });
-  test("drc20 transfer", async () => {
-      let privateKey = "QNinqvXRUi3mcuXsLxi2CCr5TK5ZJSTzX1z6cG2LWzVqTa8Qcvtn"
-      const commitTxPrevOutputList: PrevOutput[] = [];
-      commitTxPrevOutputList.push({
-          txId: "87a565f7b1a3117f659542abf49a6f71bd21513873112d8bfe528d88585c93f6",
-          vOut: 2,
-          amount: 4100000,
-          address: "DNf1x7crkrDK3pyxvgqoBx8NbSvFfAoMK2",
-          privateKey: privateKey,
-      });
-      const inscriptionDataList: DrcInscriptionData[] = [];
-      inscriptionDataList.push({
-          contentType: 'text/plain;charset=utf-8',
-            //body: '{"p":"drc-20","op":"transfer","tick":"WDOGE(WRAPPED-DOGE)","amt":"200000000"}',
-            body: '{"p":"order-v2","op":"create","tick":"CARDI","amt":"1000000000","file_id":"a112cc2bc4761c8e5c48f61c9f8775040dd2c5db49fd936dd3f5d6a9f4d8fd40"}',
-          revealAddr: 'DNf1x7crkrDK3pyxvgqoBx8NbSvFfAoMK2',
-          repeat: 1,
-      });
-      const request = {
-          commitTxPrevOutputList,
-          commitFeeRate: 50000,
-          revealFeeRate: 50000,
-          inscriptionDataList,
-          changeAddress: 'DNf1x7crkrDK3pyxvgqoBx8NbSvFfAoMK2',
-          transactionFee: 2000000,
-      };
-      const txs: InscribeTxs = inscribeDrc(dogeCoin, request);
-      console.log(txs);
-  });
+  // test("drc20 transfer", async () => {
+  //     let privateKey = "QQPSGs88mPRbrEubQW1JJdZszVoQFLRURwSHo7psuvNuHHaHrHtV"
+  //     const commitTxPrevOutputList: PrevOutput[] = [];
+  //     commitTxPrevOutputList.push({
+  //         txId: "35eea89781a80b18d1f244abf286470f6c3dff5731f5c0700593c094dc00892a",
+  //         vOut: 2,
+  //         amount: 372250000,
+  //         address: "DA3uyePnM5SDUFU4ZSi8JGjfLaWYeDw3g5",
+  //         privateKey: privateKey,
+  //     });
+  //     const inscriptionDataList: DrcInscriptionData[] = [];
+  //     inscriptionDataList.push({
+  //         contentType: 'text/plain;charset=utf-8',
+  //           body: '{"p":"drc-20","op":"transfer","tick":"CARDI","amt":"200000000"}',
+  //           // body: '{"p":"order-v2","op":"create","tick":"CARDI","amt":"1000000000","file_id":"a112cc2bc4761c8e5c48f61c9f8775040dd2c5db49fd936dd3f5d6a9f4d8fd40"}',
+  //         revealAddr: 'DA3uyePnM5SDUFU4ZSi8JGjfLaWYeDw3g5',
+  //         receiveAddr: 'DH5RX8yrAS38VCKQyVuicmmf8VvvztZvJM,DJu5mMUKprfnyBhot2fqCsW9sZCsfdfcrZ',
+  //         repeat: 1,
+  //     });
+  //     const request = {
+  //         commitTxPrevOutputList,
+  //         commitFeeRate: 50000,
+  //         revealFeeRate: 50000,
+  //         inscriptionDataList,
+  //         changeAddress: 'DA3uyePnM5SDUFU4ZSi8JGjfLaWYeDw3g5',
+  //         transactionFee: 2000000,
+  //     };
+  //     const txs: InscribeTxs = inscribeDrc(dogeCoin, request);
+  //     console.log(txs);
+  // });
 
 //   test("inscribeFile", async () => {
 //       let privateKey = "QQsjj9qokqMrzdFqQUy5Z9mbUpvcxCDZC26z9uDkF8buZys5noxY"
@@ -151,39 +152,43 @@ describe("cardinals test", () => {
 
 // });
 
-// test("inscribeRouter", async () => {
-//       let privateKey = "QRJx7uvj55L3oVRADWJfFjJ31H9Beg75xZ2GcmR8rKFNHA4ZacKJ"
-//       const commitTxPrevOutputList: PrevOutput[] = [];
-//       commitTxPrevOutputList.push({
-//           txId: "635887403a212c3f181f229af6aea2a35bf3ff20d04e0c778b45cf71f92ce640",
-//           vOut: 0,
-//           amount: 200000000,
-//           address: "DJu5mMUKprfnyBhot2fqCsW9sZCsfdfcrZ",
-//           privateKey: privateKey,
-//       });
-//       const inscriptionDataList: RouterInscriptionData[] = [];
-//       inscriptionDataList.push({
-//           contentType: 'text/plain;charset=utf-8',
-//           body: '{"p":"drc-20","op":"swap","tick":"WDOGE(WRAPPED-DOGE)","amt":"200000000"}',
-//           revealAddr: 'DJu5mMUKprfnyBhot2fqCsW9sZCsfdfcrZ'
-//       },{
-//         contentType: 'text/plain;charset=utf-8',
-//         body: '{"p":"drc-20","op":"swap","tick":"WDOGE(WRAPPED-DOGE)","amt":"100000000"}',
-//         revealAddr: 'DJu5mMUKprfnyBhot2fqCsW9sZCsfdfcrZ',
-//     });
-//       const request = {
-//           commitTxPrevOutputList,
-//           commitFeeRate: 50000,
-//           revealFeeRate: 50000,
-//           inscriptionDataList,
-//           changeAddress: 'DJu5mMUKprfnyBhot2fqCsW9sZCsfdfcrZ',
-//       };
+test("inscribeRouter", async () => {
+      let privateKey = "QQsjj9qokqMrzdFqQUy5Z9mbUpvcxCDZC26z9uDkF8buZys5noxY"
+      const commitTxPrevOutputList: PrevOutput[] = [];
+      commitTxPrevOutputList.push({
+          txId: "a7bdfb524272d24fbe27adbe208052eb80de220df695948947222f614e9ad668",
+          vOut: 0,
+          amount: 500000000,
+          address: "DH5RX8yrAS38VCKQyVuicmmf8VvvztZvJM",
+          privateKey: privateKey,
+      });
+      const inscriptionDataList: RouterInscriptionData[] = [];
+      inscriptionDataList.push({
+          contentType: 'text/plain;charset=utf-8',
+          doge: 1,
+          body: '{"p":"pair-v1","op":"swap","tick0": "WDOGE(WRAPPED-DOGE)","tick1": "UNIX" ,"amt0": "11200000", "amt1": "107231983204", "amt1_min": "106695823288"}',
+          revealAddr: 'DH5RX8yrAS38VCKQyVuicmmf8VvvztZvJM'
+      },{
+        contentType: 'text/plain;charset=utf-8',
+        doge: 1,
+        body: '{"p":"pair-v1","op":"swap","tick0": "UNIX","tick1": "DIS" ,"amt0": "12000000", "amt1": "137231983204", "amt1_min": "106695823288"}',
+        revealAddr: 'DH5RX8yrAS38VCKQyVuicmmf8VvvztZvJM'
+    });
+      const request = {
+          commitTxPrevOutputList,
+          commitFeeRate: 50000,
+          revealFeeRate: 50000,
+          inscriptionDataList,
+          changeAddress: 'DH5RX8yrAS38VCKQyVuicmmf8VvvztZvJM',
+          transactionFee: 10000000,
+      };
 
-//       const txs: InscribeTxs = inscribeRouter(dogeCoin, request);
-//       console.log(txs);
-//       // const fs = require('fs');
-//       // const longHash = txs.revealTxs[0];
-//       // fs.writeFileSync('hash_output.txt', longHash);
-//   });
+      const txs: InscribeTxs = inscribeRouter(dogeCoin, request);
+      console.log(txs);
+      const fs = require('fs');
+      const longHash = txs.revealTxs[0];
+      console.log(longHash, 'longHash')
+      fs.writeFileSync('hash_output.txt', longHash);
+  });
 
 })
