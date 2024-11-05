@@ -12,3 +12,4 @@ coverage
 package-lock.json
 .eslintcache
 hash_output.txt
+tests
