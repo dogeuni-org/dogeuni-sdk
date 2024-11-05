@@ -11,10 +11,9 @@ import {PrevOutput} from "./inscribe";
 
 export type RouterInscriptionData = {
     contentType: string
-    body: string | Buffer | any
+    body: any
     revealAddr: string
     receiveAddr?: string
-    doge?: any
 }
 
 export type RouterInscriptionRequest = {
@@ -105,10 +104,9 @@ export class RouterInscriptionTool {
             const inscriptionScript = bitcoin.script.compile(inscriptionBuilder);
             const hash = this.commitTx.getHash();
             tx.addInput(hash, i, defaultSequenceNum, inscriptionScript);
-            const isDoge = inscriptionDataList[i].doge;
-            const body = JSON.parse(inscriptionDataList[i].body)
+            const body: any = JSON.parse(inscriptionDataList[i].body)
             let fee0 = 0
-            if (isDoge) {
+            if (body.tick0 === "WDOGE(WRAPPED-DOGE)") {
                 let amt = parseInt(body.amt0)
                 totalSwapAmt += amt
                 if (Math.floor(amt * 3 / 1000) < 50000000) {
@@ -119,7 +117,8 @@ export class RouterInscriptionTool {
                 totalFee += fee0
             }
             const fee = transactionFee ? transactionFee : Math.floor(tx.byteLength() * revealFeeRate);
-            prevOutputValue = +fee + (+body.amt0) + (+fee0);
+            prevOutputValue = body.tick0 === "WDOGE(WRAPPED-DOGE)" ? Number(fee) + Number(body.amt0) + Number(fee0) : (Number(fee) + 50000000 + 100000) / inscriptionDataList.length;
+            console.log(prevOutputValue, 'prevOutputValue==')
             inscriptionTxCtxData.revealTxPrevOutput = {
                 pkScript: inscriptionTxCtxData.commitTxAddressPkScript,
                 value: prevOutputValue,
@@ -175,6 +174,7 @@ export class RouterInscriptionTool {
 
         const fee = transactionFee ? transactionFee : Math.floor(txForEstimate.virtualSize() * commitFeeRate);
         const changeAmount = totalSenderAmount - totalRevealPrevOutputValue - fee;
+        console.log(changeAmount, 'changeAmount====',fee)
         if (changeAmount >= minChangeValue) {
             tx.outs[tx.outs.length - 1].value = changeAmount;
         } else {
