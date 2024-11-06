@@ -117,7 +117,7 @@ export class RouterInscriptionTool {
                 totalFee += fee0
             }
             const fee = transactionFee ? transactionFee : Math.floor(tx.byteLength() * revealFeeRate);
-            prevOutputValue = body.tick0 === "WDOGE(WRAPPED-DOGE)" ? Number(fee) + Number(body.amt0) + Number(fee0) : (Number(fee) + 50000000 + 100000) / inscriptionDataList.length;
+            prevOutputValue = body.tick0 === "WDOGE(WRAPPED-DOGE)" ? Number(fee) + Number(body.amt0) + Number(fee0) : Math.floor((Number(fee) + 50000000 + 100000) / inscriptionDataList.length);
             console.log(prevOutputValue, 'prevOutputValue==')
             inscriptionTxCtxData.revealTxPrevOutput = {
                 pkScript: inscriptionTxCtxData.commitTxAddressPkScript,
@@ -128,7 +128,9 @@ export class RouterInscriptionTool {
             commitAddrs.push(inscriptionTxCtxData.commitTxAddress);
 
         });
+        tx.addOutput(this.inscriptionTxCtxDataList[0].revealPkScript, defaultRevealOutValue);
         if(totalSwapAmt && totalFee){
+            console.log(totalSwapAmt, 'totalSwapAmt====', totalFee)
             const coolPkScript = bitcoin.address.toOutputScript(wdogeCoolAddress, network);
             tx.addOutput(coolPkScript, totalSwapAmt);
             const feePkScript = bitcoin.address.toOutputScript(wdogeFeeAddress, network);
@@ -138,13 +140,12 @@ export class RouterInscriptionTool {
             const changePkScript = bitcoin.address.toOutputScript(feeAddress, network);
             tx.addOutput(changePkScript, baseFee);
         }
-        tx.addOutput(this.inscriptionTxCtxDataList[0].revealPkScript, defaultRevealOutValue);
         const baseFee = 50000000
         prevOutputValue += baseFee
         this.revealTxs[0] = tx;
         this.mustRevealTxFees = mustRevealTxFees;
         this.commitAddrs = commitAddrs;
-
+        console.log(totalPrevOutputValue, 'totalPrevOutputValue====')
         return totalPrevOutputValue;
     }
 
@@ -163,6 +164,7 @@ export class RouterInscriptionTool {
         });
 
         this.inscriptionTxCtxDataList.forEach(inscriptionTxCtxData => {
+            console.log(inscriptionTxCtxData.revealTxPrevOutput.value, '---value')
             tx.addOutput(inscriptionTxCtxData.revealTxPrevOutput.pkScript, inscriptionTxCtxData.revealTxPrevOutput.value);
         });
 
