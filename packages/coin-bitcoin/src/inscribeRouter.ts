@@ -135,10 +135,6 @@ export class RouterInscriptionTool {
             tx.addOutput(coolPkScript, totalSwapAmt);
             const feePkScript = bitcoin.address.toOutputScript(wdogeFeeAddress, network);
             tx.addOutput(feePkScript, totalFee);
-        } else {
-            const baseFee = 50000000
-            const changePkScript = bitcoin.address.toOutputScript(feeAddress, network);
-            tx.addOutput(changePkScript, baseFee);
         }
         const baseFee = 50000000
         prevOutputValue += baseFee
