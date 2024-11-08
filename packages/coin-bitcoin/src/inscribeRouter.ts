@@ -105,20 +105,28 @@ export class RouterInscriptionTool {
             const hash = this.commitTx.getHash();
             tx.addInput(hash, i, defaultSequenceNum, inscriptionScript);
             const body: any = JSON.parse(inscriptionDataList[i].body)
-            let fee0 = 0
-            if (body.tick0 === "WDOGE(WRAPPED-DOGE)") {
-                let amt = parseInt(body.amt0)
-                totalSwapAmt += amt
-                if (Math.floor(amt * 3 / 1000) < 50000000) {
-                    fee0 = 50000000
-                } else {
-                    fee0 = Math.floor(amt * 3 / 1000)
+            const { tick0, amt0, amt1, tick1, op } = body
+            if (op !== "remove") {
+                const calculateFee = (amt: number) => Math.max(Math.floor(amt * 3 / 1000), 50000000);
+            
+                const processWDOGE = (amtStr: string) => {
+                    const amt = parseInt(amtStr);
+                    totalSwapAmt += amt;
+                    const fee = calculateFee(amt);
+                    totalFee += fee;
+                };
+            
+                if (tick0 === "WDOGE(WRAPPED-DOGE)") {
+                    processWDOGE(amt0);
                 }
-                totalFee += fee0
+            
+                if (tick1 === "WDOGE(WRAPPED-DOGE)" && op !== "swap") {
+                    processWDOGE(amt1);
+                }
             }
             const fee = transactionFee ? transactionFee : Math.floor(tx.byteLength() * revealFeeRate);
-            prevOutputValue = body.tick0 === "WDOGE(WRAPPED-DOGE)" ? Number(fee) + Number(body.amt0) + Number(fee0) : Math.floor((Number(fee) + 50000000 + 100000) / inscriptionDataList.length);
-            console.log(prevOutputValue, 'prevOutputValue==')
+            prevOutputValue = +totalSwapAmt + (+totalFee) + Math.floor((Number(fee) + 100000) / inscriptionDataList.length);
+            console.log(prevOutputValue, 'prevOutputValue==', totalSwapAmt, totalFee)
             inscriptionTxCtxData.revealTxPrevOutput = {
                 pkScript: inscriptionTxCtxData.commitTxAddressPkScript,
                 value: prevOutputValue,
@@ -129,10 +137,11 @@ export class RouterInscriptionTool {
 
         });
         tx.addOutput(this.inscriptionTxCtxDataList[0].revealPkScript, defaultRevealOutValue);
-        if(totalSwapAmt && totalFee){
-            console.log(totalSwapAmt, 'totalSwapAmt====', totalFee)
+        if(totalSwapAmt){
             const coolPkScript = bitcoin.address.toOutputScript(wdogeCoolAddress, network);
             tx.addOutput(coolPkScript, totalSwapAmt);
+        }
+        if(totalFee) {
             const feePkScript = bitcoin.address.toOutputScript(wdogeFeeAddress, network);
             tx.addOutput(feePkScript, totalFee);
         }
