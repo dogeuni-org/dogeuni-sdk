@@ -11,3 +11,5 @@ coverage
 *.tgz
 package-lock.json
 .eslintcache
+hash_output.txt
+tests

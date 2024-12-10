@@ -1,9 +1,12 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "allowJs": true,                       // Allows javascript files to be compiled
-    "resolveJsonModule" : true,
+    "allowJs": true,
+    "resolveJsonModule": true,
     "outDir": "./dist",
+    "types": [
+      "@types/jest"
+    ],
     "rootDir": "./src"
   },
   "include": [
