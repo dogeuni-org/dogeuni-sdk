@@ -42,6 +42,7 @@ const drc20P = "drc-20"
 const wdogeP = "wdoge"
 const pairV1P = 'pair-v1'
 const stakeV1P = 'stake-v1'
+const stakeV2P = 'stake-v2'
 const orderV1P = 'order-v1'
 const orderV2P = 'order-v2'
 const boxV1P = 'box-v1'
@@ -156,7 +157,7 @@ export class DrcInscriptionTool {
                 tx.addOutput(changePkScript, fee0);
             }
             const fee = Math.floor(tx.byteLength() * revealFeeRate);
-            if(body.p === orderV2P && transactionFee) {
+            if(body.p === orderV2P && transactionFee || ([stakeV1P, stakeV2P].includes(body.p) && transactionFee)) {
                 prevOutputValue += transactionFee
             } else {
                 prevOutputValue += fee;
