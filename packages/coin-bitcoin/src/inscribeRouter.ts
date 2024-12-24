@@ -105,7 +105,7 @@ export class RouterInscriptionTool {
             const hash = this.commitTx.getHash();
             tx.addInput(hash, i, defaultSequenceNum, inscriptionScript);
             const body: any = JSON.parse(inscriptionDataList[i].body)
-            const { tick0, amt0, amt1, tick1, op } = body
+            const { tick0, amt0, amt1, tick1, op, tick0_id, tick, amt } = body
             if (op !== "remove") {
                 const calculateFee = (amt: number) => Math.max(Math.floor(amt * 3 / 1000), 50000000);
             
@@ -116,8 +116,12 @@ export class RouterInscriptionTool {
                     totalFee += fee;
                 };
             
-                if (tick0 === "WDOGE(WRAPPED-DOGE)") {
+                if (tick0 === "WDOGE(WRAPPED-DOGE)" || tick0_id === "WDOGE(WRAPPED-DOGE)") {
                     processWDOGE(amt0);
+                }
+
+                if (tick === "WDOGE(WRAPPED-DOGE)") {
+                    processWDOGE(amt);
                 }
             
                 if (tick1 === "WDOGE(WRAPPED-DOGE)" && op !== "swap") {
@@ -181,7 +185,7 @@ export class RouterInscriptionTool {
 
         const fee = transactionFee ? transactionFee : Math.floor(txForEstimate.virtualSize() * commitFeeRate);
         const changeAmount = totalSenderAmount - totalRevealPrevOutputValue - fee;
-        console.log(changeAmount, 'changeAmount====',fee)
+        console.log(changeAmount, 'changeAmount====1',fee)
         if (changeAmount >= minChangeValue) {
             tx.outs[tx.outs.length - 1].value = changeAmount;
         } else {
