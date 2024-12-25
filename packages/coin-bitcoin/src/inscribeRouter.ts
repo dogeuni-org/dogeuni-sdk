@@ -105,7 +105,7 @@ export class RouterInscriptionTool {
             const hash = this.commitTx.getHash();
             tx.addInput(hash, i, defaultSequenceNum, inscriptionScript);
             const body: any = JSON.parse(inscriptionDataList[i].body)
-            const { tick0, amt0, amt1, tick1, op, tick0_id, tick, amt } = body
+            const { tick0, amt0, amt1, tick1, op, tick0_id, tick, amt, doge } = body
             if (op !== "remove") {
                 const calculateFee = (amt: number) => Math.max(Math.floor(amt * 3 / 1000), 50000000);
             
@@ -116,11 +116,11 @@ export class RouterInscriptionTool {
                     totalFee += fee;
                 };
             
-                if (tick0 === "WDOGE(WRAPPED-DOGE)" || tick0_id === "WDOGE(WRAPPED-DOGE)") {
+                if (tick0 === "WDOGE(WRAPPED-DOGE)" || (tick0_id === "WDOGE(WRAPPED-DOGE)" && doge === 1)) {
                     processWDOGE(amt0);
                 }
 
-                if (tick === "WDOGE(WRAPPED-DOGE)") {
+                if (tick === "WDOGE(WRAPPED-DOGE)" && doge === 1) {
                     processWDOGE(amt);
                 }
             
