@@ -157,8 +157,13 @@ export class DrcInscriptionTool {
                 tx.addOutput(changePkScript, fee0);
             }
             const fee = Math.floor(tx.byteLength() * revealFeeRate);
-            if(body.p === orderV2P && transactionFee || ([stakeV1P, stakeV2P].includes(body.p) && transactionFee)) {
-                prevOutputValue += transactionFee
+            if(body.p === orderV2P && transactionFee || ([stakeV1P, stakeV2P].includes(body.p) && transactionFee) || transactionFee) {
+                if (body.p === 'meme-20') {
+                    prevOutputValue = body.op === 'transfer' ? (+transactionFee + 100000 * receiveAddr.split(',').length) : (+transactionFee + 100000)
+                    console.log(prevOutputValue, 'prevOutputValue---', transactionFee)
+                } else {    
+                    prevOutputValue += transactionFee
+                }
             } else {
                 prevOutputValue += fee;
             }
