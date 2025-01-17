@@ -124,9 +124,8 @@ export class RouterInscriptionTool {
                     processWDOGE(amt);
                 }
             
-                if (tick1 === "WDOGE(WRAPPED-DOGE)" && op !== "swap") {
-                    const amt = amt1 || amt0
-                    processWDOGE(amt);
+                if (tick1 === "WDOGE(WRAPPED-DOGE)" && op !== 'swap' && op !== 'trade') {
+                    processWDOGE(amt1);
                 }
             }
             const fee = transactionFee ? transactionFee : Math.floor(tx.byteLength() * revealFeeRate);
