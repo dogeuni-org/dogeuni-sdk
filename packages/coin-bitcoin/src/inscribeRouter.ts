@@ -125,7 +125,8 @@ export class RouterInscriptionTool {
                 }
             
                 if (tick1 === "WDOGE(WRAPPED-DOGE)" && op !== "swap") {
-                    processWDOGE(amt1);
+                    const amt = amt1 || amt0
+                    processWDOGE(amt);
                 }
             }
             const fee = transactionFee ? transactionFee : Math.floor(tx.byteLength() * revealFeeRate);
