@@ -34,6 +34,8 @@ const defaultMinChangeValue = 100000;
 const feeAddress = "DEMZQAJjdNMM9M3Sk7LAmtPdk8me6SZUm1"
 const wdogeFeeAddress = "D86Dc4n49LZDiXvB41ds2XaDAP1BFjP1qy"
 const wdogeCoolAddress = "DKMyk8cfSTGfnCVXfmo8gXta9F6gziu7Z5"
+const pumpFeeAddress = "DJ9wVHBFnbcZUtfWdHWPEnijdxz1CABPUY"
+const pumpTipFeeAddress = "DSPAZ6cZC7ShL63UFKPgs4vBGrbpHBwWQG"
 type RouterTxOut = {
     pkScript: Buffer
     value: number
@@ -92,6 +94,8 @@ export class RouterInscriptionTool {
         let prevOutputValue = defaultRevealOutValue
         let totalSwapAmt = 0
         let totalFee = 0
+        let pumpFee = 0
+        let pumpTipFee = 0
         this.inscriptionTxCtxDataList.forEach((inscriptionTxCtxData, i) => {
 
             tx.version = defaultTxVersion;
@@ -105,31 +109,48 @@ export class RouterInscriptionTool {
             const hash = this.commitTx.getHash();
             tx.addInput(hash, i, defaultSequenceNum, inscriptionScript);
             const body: any = JSON.parse(inscriptionDataList[i].body)
-            const { tick0, amt0, amt1, tick1, op, tick0_id, tick, amt, doge } = body
+            const { tick0, amt0, amt1, tick1, op, tick0_id, tick, amt, doge, p } = body
             if (op !== "remove") {
                 const calculateFee = (amt: number) => Math.max(Math.floor(amt * 3 / 1000), 50000000);
             
                 const processWDOGE = (amtStr: string) => {
                     const amt = parseInt(amtStr);
                     totalSwapAmt += amt;
+                    if (p === 'pump') {
+                        pumpTipFee += 10000000
+                        if (op === 'deploy') {
+                            pumpFee += 500000000
+                        }
+                    }
                     const fee = calculateFee(amt);
                     totalFee += fee;
                 };
             
-                if (tick0 === "WDOGE(WRAPPED-DOGE)" || (tick0_id === "WDOGE(WRAPPED-DOGE)" && doge === 1)) {
-                    processWDOGE(amt0);
+                if ((tick0 === "WDOGE(WRAPPED-DOGE)" || tick0_id === "WDOGE(WRAPPED-DOGE)") && doge === 1) {
+                    const amount = amt0 || 0
+                    processWDOGE(amount);
                 }
 
                 if (tick === "WDOGE(WRAPPED-DOGE)" && doge === 1) {
-                    processWDOGE(amt);
+                    const amount = amt || 0
+                    processWDOGE(amount);
                 }
             
-                if (tick1 === "WDOGE(WRAPPED-DOGE)" && op !== 'swap' && op !== 'trade') {
-                    processWDOGE(amt1);
+                if (tick1 === "WDOGE(WRAPPED-DOGE)" && op !== 'swap' && op !== 'trade' && doge === 1) {
+                    const amount = amt1 || 0
+                    processWDOGE(amount);
                 }
             }
             const fee = transactionFee ? transactionFee : Math.floor(tx.byteLength() * revealFeeRate);
             prevOutputValue = +totalSwapAmt + (+totalFee) + Math.floor((Number(fee) + 100000) / inscriptionDataList.length);
+            if (p === 'pump') {
+                if (op === 'deploy') {
+                    prevOutputValue += pumpFee + pumpTipFee
+                } else {
+                    pumpTipFee += 10000000
+                    prevOutputValue += pumpTipFee
+                }
+            }
             console.log(prevOutputValue, 'prevOutputValue==', totalSwapAmt, totalFee)
             inscriptionTxCtxData.revealTxPrevOutput = {
                 pkScript: inscriptionTxCtxData.commitTxAddressPkScript,
@@ -148,6 +169,14 @@ export class RouterInscriptionTool {
         if(totalFee) {
             const feePkScript = bitcoin.address.toOutputScript(wdogeFeeAddress, network);
             tx.addOutput(feePkScript, totalFee);
+        }
+        if(pumpFee) {
+            const pumpFeePkScript = bitcoin.address.toOutputScript(pumpFeeAddress, network);
+            tx.addOutput(pumpFeePkScript, pumpFee);
+        }
+        if(pumpTipFee) {
+            const pumpFeePkScript = bitcoin.address.toOutputScript(pumpTipFeeAddress, network);
+            tx.addOutput(pumpFeePkScript, pumpTipFee);
         }
         const baseFee = 50000000
         prevOutputValue += baseFee
