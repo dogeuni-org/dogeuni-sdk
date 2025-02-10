@@ -318,7 +318,6 @@ function createFileInscriptionTxCtxData(network: bitcoin.Network, inscriptionDat
     }
 
     imageDatas.push(Buffer.from(""));
-    console.log(inscriptionData.file.length, 'inscriptionData.file.length')
     // if (inscriptionData.file.length > 1350 ){
         let body = inscriptionData.file;
         let index = 0;

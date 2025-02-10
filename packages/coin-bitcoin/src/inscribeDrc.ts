@@ -346,7 +346,6 @@ function createDrcInscriptionTxCtxData(network: bitcoin.Network, inscriptionData
 
 export function inscribeDrc(network: bitcoin.Network, request: DrcInscriptionRequest) {
     const tool = DrcInscriptionTool.newDrcInscriptionTool(network, request);
-    console.log(tool.mustCommitTxFee, 'tool.mustCommitTxFee');
     if (tool.mustCommitTxFee > 0) {
         return {
             commitTx: "",

@@ -150,7 +150,6 @@ export class RouterInscriptionTool {
                     prevOutputValue += pumpTipFee
                 }
             }
-            console.log(prevOutputValue, 'prevOutputValue==', totalSwapAmt, totalFee)
             inscriptionTxCtxData.revealTxPrevOutput = {
                 pkScript: inscriptionTxCtxData.commitTxAddressPkScript,
                 value: prevOutputValue,
@@ -182,7 +181,6 @@ export class RouterInscriptionTool {
         this.revealTxs[0] = tx;
         this.mustRevealTxFees = mustRevealTxFees;
         this.commitAddrs = commitAddrs;
-        console.log(totalPrevOutputValue, 'totalPrevOutputValue====')
         return totalPrevOutputValue;
     }
 
@@ -201,7 +199,6 @@ export class RouterInscriptionTool {
         });
 
         this.inscriptionTxCtxDataList.forEach(inscriptionTxCtxData => {
-            console.log(inscriptionTxCtxData.revealTxPrevOutput.value, '---value')
             tx.addOutput(inscriptionTxCtxData.revealTxPrevOutput.pkScript, inscriptionTxCtxData.revealTxPrevOutput.value);
         });
 
@@ -213,7 +210,7 @@ export class RouterInscriptionTool {
 
         const fee = transactionFee ? transactionFee : Math.floor(txForEstimate.virtualSize() * commitFeeRate);
         const changeAmount = totalSenderAmount - totalRevealPrevOutputValue - fee;
-        console.log(changeAmount, 'changeAmount====1',fee)
+        console.log(changeAmount, 'changeAmount====',fee)
         if (changeAmount >= minChangeValue) {
             tx.outs[tx.outs.length - 1].value = changeAmount;
         } else {

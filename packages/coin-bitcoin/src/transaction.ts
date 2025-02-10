@@ -20,7 +20,6 @@ export type TransactionRequest = {
 
 const defaultTxVersion = 2;
 const defaultSequenceNum = 0xfffffffd;
-const defaultRevealOutValue = 100000;
 const defaultMinChangeValue = 100000;
 
 export type TransactionTxOut = {
@@ -63,7 +62,6 @@ export class TransactionTool {
         request.transactionDataList.forEach(inscriptionData => {
             tool.transactionTxCtxDataList.push(createTransactionTxCtxData(network, inscriptionData, privateKey));
         });
-        console.log(request, 'request====')
         const insufficient = tool.buildCommitTx(network, request.commitTxPrevOutputList, request.transactionDataList, request.changeAddress, request.commitFeeRate, minChangeValue, request?.transactionFee);
         if (insufficient) {
             return tool;
@@ -86,20 +84,14 @@ export class TransactionTool {
         });
         let totalRevealPrevOutputValue = 0
         transactionDataList.forEach(item => {
-            console.log(item, '---item')
             const changePkScript = bitcoin.address.toOutputScript(item.revealAddr, network);
             tx.addOutput(changePkScript, item.amount);
             totalRevealPrevOutputValue += item.amount;
         })
-       console.log(tx.outs, 'tx.outs====342', totalRevealPrevOutputValue)
         const txForEstimate = tx.clone();
         signTx(txForEstimate, commitTxPrevOutputList, this.network);
         const fee = transactionFee ? transactionFee : Math.floor(txForEstimate.virtualSize() * commitFeeRate);
-        console.log(fee, '----feee2', txForEstimate.virtualSize())
         const changeAmount = totalSenderAmount - totalRevealPrevOutputValue - fee;
-        console.log(totalSenderAmount, totalRevealPrevOutputValue, fee, 'test===')
-        console.log(tx.outs, 'tx.outs====2222')
-
         const changePkScript = bitcoin.address.toOutputScript(changeAddress, network);
         console.log(changeAmount, 'changeAmount====', minChangeValue, changeAmount >= minChangeValue)
         if (changeAmount >= 0) {
@@ -115,7 +107,6 @@ export class TransactionTool {
                 return true;
             }
         }
-        console.log(tx.outs, 'tx.outs====4444')
         this.commitTx = tx;
         return false;
     }
