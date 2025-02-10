@@ -147,7 +147,6 @@ export class RouterInscriptionTool {
                 if (op === 'deploy') {
                     prevOutputValue += pumpFee + pumpTipFee
                 } else {
-                    pumpTipFee += 10000000
                     prevOutputValue += pumpTipFee
                 }
             }

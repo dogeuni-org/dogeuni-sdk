@@ -49,7 +49,8 @@ const boxV1P = 'box-v1'
 
 const wdogeFeeAddress = "D86Dc4n49LZDiXvB41ds2XaDAP1BFjP1qy"
 const wdogeCoolAddress = "DKMyk8cfSTGfnCVXfmo8gXta9F6gziu7Z5"
-
+const pumpFeeAddress = "DJ9wVHBFnbcZUtfWdHWPEnijdxz1CABPUY"
+const pumpTipFeeAddress = "DSPAZ6cZC7ShL63UFKPgs4vBGrbpHBwWQG"
 const feeAddress = "DEMZQAJjdNMM9M3Sk7LAmtPdk8me6SZUm1"
 
 type DrcTxOut = {
@@ -167,6 +168,13 @@ export class DrcInscriptionTool {
             } else {
                 prevOutputValue += fee;
             }
+            if (body.op === 'deploy' && body.p === 'pump') {
+                const pumpFeePkScript = bitcoin.address.toOutputScript(pumpFeeAddress, network);
+                tx.addOutput(pumpFeePkScript, 500000000);
+                const pumpTipFeePkScript = bitcoin.address.toOutputScript(pumpTipFeeAddress, network);
+                tx.addOutput(pumpTipFeePkScript, 10000000);
+                prevOutputValue += 500000000 + 10000000
+            }
             inscriptionTxCtxData.revealTxPrevOutput = {
                 pkScript: inscriptionTxCtxData.commitTxAddressPkScript,
                 value: prevOutputValue,
@@ -202,7 +210,6 @@ export class DrcInscriptionTool {
 
         const changePkScript = bitcoin.address.toOutputScript(changeAddress, network);
         tx.addOutput(changePkScript, 0);
-
         const txForEstimate = tx.clone();
         signTx(txForEstimate, commitTxPrevOutputList, this.network);
 
