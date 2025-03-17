@@ -110,37 +110,35 @@ export class RouterInscriptionTool {
             tx.addInput(hash, i, defaultSequenceNum, inscriptionScript);
             const body: any = JSON.parse(inscriptionDataList[i].body)
             const { tick0, amt0, amt1, tick1, op, tick0_id, tick, amt, doge, p } = body
-            if (op !== "remove") {
-                const calculateFee = (amt: number) => Math.max(Math.floor(amt * 3 / 1000), 50000000);
-            
-                const processWDOGE = (amtStr: string) => {
-                    const amt = parseInt(amtStr);
-                    totalSwapAmt += amt;
-                    if (p === 'pump') {
-                        pumpTipFee += 10000000
-                        if (op === 'deploy') {
-                            pumpFee += 500000000
-                        }
+            const calculateFee = (amt: number) => Math.max(Math.floor(amt * 3 / 1000), 50000000);
+        
+            const processWDOGE = (amtStr: string) => {
+                const amt = parseInt(amtStr);
+                totalSwapAmt += amt;
+                if (p === 'pump') {
+                    pumpTipFee += 10000000
+                    if (op === 'deploy') {
+                        pumpFee += 500000000
                     }
-                    const fee = calculateFee(amt);
-                    totalFee += fee;
-                };
-            
-                if ((tick0 === "WDOGE(WRAPPED-DOGE)" || tick0_id === "WDOGE(WRAPPED-DOGE)") && doge === 1) {
-                    const amount = amt0 || 0
-                    processWDOGE(amount);
                 }
-
-                if (tick === "WDOGE(WRAPPED-DOGE)" && doge === 1) {
-                    const amount = amt || 0
-                    processWDOGE(amount);
-                }
-            
-                if (tick1 === "WDOGE(WRAPPED-DOGE)" && op !== 'swap' && op !== 'trade' && doge === 1) {
-                    const amount = amt1 || 0
-                    processWDOGE(amount);
-                }
+                const fee = calculateFee(amt);
+                totalFee += fee;
+            };
+        
+            if ((tick0 === "WDOGE(WRAPPED-DOGE)" || tick0_id === "WDOGE(WRAPPED-DOGE)") && doge === 1) {
+                const amount = amt0 || 0
+                processWDOGE(amount);
             }
+
+            if (tick === "WDOGE(WRAPPED-DOGE)" && doge === 1) {
+                const amount = amt || 0
+                processWDOGE(amount);
+            }
+            if (tick1 === "WDOGE(WRAPPED-DOGE)" && op !== 'swap' && op !== 'trade' && doge === 1) {
+                const amount = amt1 || 0
+                processWDOGE(amount);
+            }
+
             const fee = transactionFee ? transactionFee : Math.floor(tx.byteLength() * revealFeeRate);
             prevOutputValue = +totalSwapAmt + (+totalFee) + Math.floor((Number(fee) + 100000) / inscriptionDataList.length);
             if (p === 'pump') {
@@ -299,6 +297,10 @@ function signTx(tx: bitcoin.Transaction, commitTxPrevOutputList: PrevOutput[], n
         }
     });
 }
+function formatterBody(body: any) {
+    let { tick0, tick1, ...filteredBody } = body
+    return JSON.stringify(filteredBody)
+}
 
 function createRouterInscriptionTxCtxData(network: bitcoin.Network, inscriptionData: RouterInscriptionData, privateKeyWif: string): RouterInscriptionTxCtxData {
     const privateKey = base.fromHex(privateKeyFromWIF(privateKeyWif, network));
@@ -312,7 +314,13 @@ function createRouterInscriptionTxCtxData(network: bitcoin.Network, inscriptionD
     inscriptionBuilder.push(ops.OP_CHECKMULTISIGVERIFY);
     inscriptionBuilder.push(Buffer.from("ord"));
     inscriptionBuilder.push(Buffer.from(inscriptionData.contentType));
-    inscriptionBuilder.push(Buffer.from(inscriptionData.body));
+    const body = JSON.parse(inscriptionData.body)
+    if (body.p === 'pair-v2') {
+        const formatterReasult = formatterBody(body)
+        inscriptionBuilder.push(Buffer.from(formatterReasult));
+    } else {
+        inscriptionBuilder.push(Buffer.from(inscriptionData.body));
+    }
     inscriptionBuilder.push(ops.OP_DROP);
     inscriptionBuilder.push(ops.OP_DROP);
     inscriptionBuilder.push(ops.OP_DROP);
