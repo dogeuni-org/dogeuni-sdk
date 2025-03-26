@@ -138,7 +138,16 @@ export class RouterInscriptionTool {
                 const amount = amt1 || 0
                 processWDOGE(amount);
             }
-
+            if (p === 'pump' && doge === 0) {
+                if (tick === "WDOGE(WRAPPED-DOGE)" || op === 'trade' ) {
+                    pumpTipFee += 10000000
+                }
+            }
+            if (p === 'pump') {
+                if (doge === 1 && op === 'trade' && tick0_id !== "WDOGE(WRAPPED-DOGE)") {
+                    pumpTipFee += 10000000;
+                }
+            }
             const fee = transactionFee ? transactionFee : Math.floor(tx.byteLength() * revealFeeRate);
             prevOutputValue = +totalSwapAmt + (+totalFee) + Math.floor((Number(fee) + 100000) / inscriptionDataList.length);
             if (p === 'pump') {
