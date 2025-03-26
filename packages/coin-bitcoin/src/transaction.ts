@@ -1,5 +1,5 @@
 import * as bitcoin from "./bitcoinjs-lib";
-import { base } from "@unielon/crypto-lib";
+import { base } from "@dogeuni-org/crypto-lib";
 import {
     getAddressType,
     private2public,

@@ -16,7 +16,7 @@ import {
     GetRawTransactionParams,
     ValidSignedTransactionParams, MpcMessageParam,
 } from './common';
-import {bip39, bip32, base, signUtil} from "@unielon/crypto-lib";
+import {bip39, bip32, base, signUtil} from "@dogeuni-org/crypto-lib";
 
 export function secp256k1SignTest(privateKey: Buffer) {
     const msgHash = base.sha256("secp256k1-test");

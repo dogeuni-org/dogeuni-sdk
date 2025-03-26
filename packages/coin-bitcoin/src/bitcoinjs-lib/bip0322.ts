@@ -2,7 +2,7 @@
  * The following methods are based on `bitcoinjs`, thanks for their work
  * https://github.com/bitcoinjs/bitcoinjs-lib
  */
-import { base } from "@unielon/crypto-lib"
+import { base } from "@dogeuni-org/crypto-lib"
 import { toOutputScript } from './address';
 import { Network } from './networks';
 import { Transaction } from './transaction';

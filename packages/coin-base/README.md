@@ -1,7 +1,7 @@
 # Installation
 This is a base library on which all currencies depend. You need to install this library.
 ```shell
-npm install @unielon/crypto-base
+npm install @dogeuni-org/crypto-base
 ```
 
 ## Provides

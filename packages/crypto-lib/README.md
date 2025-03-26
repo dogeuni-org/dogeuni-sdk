@@ -2,7 +2,7 @@
 This is a base package on which all currencies depend. You need to install this library.
 
 ```shell
-npm install @unielon/crypto-lib
+npm install @dogeuni-org/crypto-lib
 ```
 
 ## Provides

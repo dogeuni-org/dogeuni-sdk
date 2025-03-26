@@ -47,7 +47,7 @@ import {
     isP2WSHScript,
     isP2SHScript,
 } from './psbt/psbtutils';
-import {base, signUtil} from '@unielon/crypto-lib';
+import {base, signUtil} from '@dogeuni-org/crypto-lib';
 import {signature as bitcoinSignature} from './script';
 import {taprootTweakPubkey} from '../taproot';
 import * as buffer from "buffer";

@@ -14,7 +14,7 @@ import {
   StackFunction,
 } from './index';
 import * as lazy from './lazy';
-import {base}  from '@unielon/crypto-lib';
+import {base}  from '@dogeuni-org/crypto-lib';
 const OPS = bscript.OPS;
 
 function stacksEqual(a: Buffer[], b: Buffer[]): boolean {

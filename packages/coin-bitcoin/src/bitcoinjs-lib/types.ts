@@ -3,7 +3,7 @@
  * https://github.com/bitcoinjs/bitcoinjs-lib
  */
 import { Buffer as NBuffer } from 'buffer';
-import { typeforce } from "@unielon/crypto-lib";
+import { typeforce } from "@dogeuni-org/crypto-lib";
 export { typeforce }
 
 const ZERO32 = NBuffer.alloc(32, 0);

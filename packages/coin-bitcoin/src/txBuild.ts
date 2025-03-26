@@ -1,5 +1,5 @@
 import * as bitcoin from "./bitcoinjs-lib";
-import {base, typeforce, signUtil} from "@unielon/crypto-lib"
+import {base, typeforce, signUtil} from "@dogeuni-org/crypto-lib"
 import { utxoInput, utxoOutput, utxoTx } from "./type";
 import * as wif from "./wif"
 import { Base58CheckResult, Bech32Result, fromBase58Check, fromBech32 } from './bitcoinjs-lib/address';

@@ -1,5 +1,5 @@
 {
-  "name": "@unielon/crypto-lib",
+  "name": "@dogeuni-org/crypto-lib",
   "version": "1.0.1",
   "description": "",
   "main": "./dist/index.js",
@@ -12,10 +12,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/unielon-org/unielon-sdk"
+    "url": "https://github.com/dogeuni-org/dogeuni-sdk"
   },
   "keywords": [],
-  "author": "unielon",
+  "author": "dogeuni",
   "license": "MIT OR MPL 2.0",
   "files": [
     "dist"

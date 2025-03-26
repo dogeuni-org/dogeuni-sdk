@@ -1,4 +1,4 @@
-# unielon-sdk
+# @dogeuni-sdk
 
 This is a typescript/javascript language wallet solution that supports offline transactions.
 
@@ -7,11 +7,11 @@ To obtain the latest version, simply require the project using npm:
 
 ```shell
 # needed for all coins
-npm install @unielon/crypto-lib
-npm install @unielon/coin-base
+npm install @dogeuni-org/crypto-lib
+npm install @dogeuni-org/coin-base
 
 # for dogecoin
-npm install @unielon/coin-dogecoin
+npm install @dogeuni-org/coin-dogecoin
 ```
 
 ## Build Locally

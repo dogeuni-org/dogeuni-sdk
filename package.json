@@ -1,7 +1,7 @@
 {
-  "name": "unielonweb3",
+  "name": "dogeuniweb3",
   "version": "1.0.0",
-  "description": "unielon js sdk for web3",
+  "description": "dogeuni js sdk for web3",
   "main": "index.js",
   "scripts": {},
   "author": "",
@@ -21,9 +21,9 @@
     "typescript": "^4.6.2"
   },
   "dependencies": {
-    "@unielon/coin-base": "^1.0.1",
-    "@unielon/coin-bitcoin": "^1.0.1",
-    "@unielon/crypto-lib": "^1.0.1",
+    "@dogeuni-org/coin-base": "^1.0.1",
+    "@dogeuni-org/coin-bitcoin": "^1.0.1",
+    "@dogeuni-org/crypto-lib": "^1.0.1",
     "@scure/bip39": "^1.2.1"
   }
 }

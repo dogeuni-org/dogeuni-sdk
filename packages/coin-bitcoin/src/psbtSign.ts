@@ -1,5 +1,5 @@
 import {Psbt, PsbtInputExtended, PsbtOutputExtended} from "./bitcoinjs-lib/psbt";
-import {base, signUtil} from '@unielon/crypto-lib';
+import {base, signUtil} from '@dogeuni-org/crypto-lib';
 import {getAddressType, privateKeyFromWIF, sign, signBtc, wif2Public} from './txBuild';
 import {address, Network, networks, payments, Transaction} from './bitcoinjs-lib';
 import * as taproot from "./taproot";

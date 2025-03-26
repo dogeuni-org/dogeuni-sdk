@@ -16,7 +16,7 @@ import {
 } from './bip341';
 import { Payment, PaymentOpts } from './index';
 import * as lazy from './lazy';
-import { base } from '@unielon/crypto-lib';
+import { base } from '@dogeuni-org/crypto-lib';
 
 const OPS = bscript.OPS;
 const TAPROOT_WITNESS_VERSION = 0x01;

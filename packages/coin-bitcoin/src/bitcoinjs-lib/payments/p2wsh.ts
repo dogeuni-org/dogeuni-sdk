@@ -8,7 +8,7 @@ import * as bscript from '../script';
 import { isPoint, typeforce as typef } from '../types';
 import { Payment, PaymentOpts, StackElement, StackFunction } from './index';
 import * as lazy from './lazy';
-import { base } from '@unielon/crypto-lib';
+import { base } from '@dogeuni-org/crypto-lib';
 const OPS = bscript.OPS;
 
 const EMPTY_BUFFER = Buffer.alloc(0);

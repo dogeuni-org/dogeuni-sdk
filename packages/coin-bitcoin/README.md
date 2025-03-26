@@ -1,4 +1,4 @@
-# @unielon/coin-dogecoin
+# @dogeuni-org/coin-dogecoin
 Dogecoin SDK is used to interact with the Dogecoin Mainnet or Testnet, it contains various functions can be used to web3 wallet.
 
 ## What Can Dogecoin SDK Do
@@ -29,12 +29,12 @@ Dogecoin SDK is used to interact with the Dogecoin Mainnet or Testnet, it contai
 ## Getting Started
 **Installing Dogecoin SDK**
 ```shell
-npm install @unielon/coin-dogecoin
+npm install @dogeuni-org/coin-dogecoin
 ```
 
 ## Dogecoin Transfer
 ```typescript
-import { PrevOutput, TransactionData, TransactionTxs, transaction, dogeCoin } from "@unielon/coin-dogecoin";
+import { PrevOutput, TransactionData, TransactionTxs, transaction, dogeCoin } from "@dogeuni-org/coin-dogecoin";
 let privateKey = "QRtc49g1hVrMaqAFqZRb1EiYqUp4F896STQywyiQiUMeUSvcRh15"
 const commitTxPrevOutputList: PrevOutput[] = [];
 commitTxPrevOutputList.push({
@@ -67,7 +67,7 @@ const txs: TransactionTxs = transaction(dogeCoin, request);
 ## Using Dogecoin SDK
 ### inscribeDrc
 ```typescript
-import { PrevOutput, DrcInscriptionData, InscribeTxs, inscribeDrc, dogeCoin } from "@unielon/coin-dogecoin";
+import { PrevOutput, DrcInscriptionData, InscribeTxs, inscribeDrc, dogeCoin } from "@dogeuni-org/coin-dogecoin";
 let privateKey = "QRtc49g1hVrMaqAFqZRb1EiYqUp4F896STQywyiQiUMeUSvcRh15"
 const commitTxPrevOutputList: PrevOutput[] = [];
 commitTxPrevOutputList.push({
@@ -97,7 +97,7 @@ const res: InscribeTxs = inscribeDrc(dogeCoin, request)
 
 ### inscribeRouter
 ```typescript
-import { PrevOutput, RouterInscriptionData, InscribeTxs, inscribeRouter, dogeCoin } from "@unielon/coin-dogecoin";
+import { PrevOutput, RouterInscriptionData, InscribeTxs, inscribeRouter, dogeCoin } from "@dogeuni-org/coin-dogecoin";
 let privateKey = "QRtc49g1hVrMaqAFqZRb1EiYqUp4F896STQywyiQiUMeUSvcRh15"
 const commitTxPrevOutputList: PrevOutput[] = [];
 commitTxPrevOutputList.push({

@@ -1,4 +1,4 @@
-import { base, BigNumber } from '@unielon/crypto-lib';
+import { base, BigNumber } from '@dogeuni-org/crypto-lib';
 
 export function convert2Number(data: any) {
   if(data == undefined) {

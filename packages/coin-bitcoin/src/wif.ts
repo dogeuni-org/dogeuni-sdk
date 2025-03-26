@@ -1,4 +1,4 @@
-import {base} from "@unielon/crypto-lib";
+import {base} from "@dogeuni-org/crypto-lib";
 
 export function decodeRaw (buffer: Buffer, version?: number) {
     // check version only if defined

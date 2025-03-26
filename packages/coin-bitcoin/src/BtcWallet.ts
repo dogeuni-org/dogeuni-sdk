@@ -34,8 +34,8 @@ import {
   SignMsgError,
   SignTxError,
   validSignedTransactionError
-} from '@unielon/coin-base';
-import { base, bip32, bip39 } from '@unielon/crypto-lib';
+} from '@dogeuni-org/coin-base';
+import { base, bip32, bip39 } from '@dogeuni-org/crypto-lib';
 import * as bitcoin from "./index"
 
 export function convert2UtxoTx(utxoTx: any): bitcoin.utxoTx {

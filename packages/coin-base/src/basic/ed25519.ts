@@ -1,5 +1,5 @@
 import {DerivePriKeyParams} from "../common";
-import {base, bip39, signUtil} from "@unielon/crypto-lib";
+import {base, bip39, signUtil} from "@dogeuni-org/crypto-lib";
 
 export function ed25519SignTest(privateKey: Buffer) {
     const msgHash = base.sha256("ed25519-test");

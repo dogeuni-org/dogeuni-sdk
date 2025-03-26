@@ -1,4 +1,4 @@
-import { signUtil } from "@unielon/crypto-lib";
+import { signUtil } from "@dogeuni-org/crypto-lib";
 const secp256k1 = signUtil.schnorr.secp256k1
 const schnorr = secp256k1.schnorr
 const ProjPoint = secp256k1.secp256k1.ProjectivePoint

@@ -1,5 +1,5 @@
 import * as bitcoin from "./bitcoinjs-lib";
-import {base,signUtil} from "@unielon/crypto-lib";
+import {base,signUtil} from "@dogeuni-org/crypto-lib";
 import * as taproot from "./taproot";
 import * as bcrypto from "./bitcoinjs-lib/crypto";
 import {vectorSize} from "./bitcoinjs-lib/transaction";

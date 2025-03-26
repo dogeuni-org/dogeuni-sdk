@@ -298,6 +298,42 @@
   dependencies:
     "@jridgewell/trace-mapping" "0.3.9"
 
+"@dogeuni-org/coin-base@^1.0.1":
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/@dogeuni-org/coin-base/-/coin-base-1.0.1.tgz#09dbd6996ce36242f52cd16aea22bbfe81fd8ec3"
+  integrity sha512-aZLMs8Ua3mQqNCVgQsY+UlPPYzHVw2nnG7CmxGyD5JFaVuZupJebAlwlEf5W88WahVTLorb+irVpOUQ+OJMWbg==
+  dependencies:
+    "@dogeuni-org/crypto-lib" "^1.0.1"
+
+"@dogeuni-org/crypto-lib@^1.0.1":
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/@dogeuni-org/crypto-lib/-/crypto-lib-1.0.1.tgz#560fc4ed32f12fb51afb22a0566bcaf97a5dfcbf"
+  integrity sha512-VU7zbPQwXjMUNoW/LhmpsWJHBXiqnHBDH3bDDoIkHQ1NKTEQDAyRpKY02iT49yLcrJxikX6MmWKV/4HnIBkdhw==
+  dependencies:
+    "@noble/ed25519" "^1.7.3"
+    "@noble/hashes" "1.0.0"
+    "@noble/secp256k1" "^1.7.1"
+    "@scure/base" "1.0.0"
+    asmcrypto.js "^2.3.2"
+    bigint-conversion "^2.3.0"
+    bigint-crypto-utils "^3.1.8"
+    bignumber.js "^9.0.1"
+    bn.js "4.12.0"
+    brorand "^1.1.0"
+    crypto-js "^3.3.0"
+    hash.js "^1.0.0"
+    hmac-drbg "^1.0.1"
+    inherits "^2.0.4"
+    jsrsasign "^10.8.2"
+    long "^5.2.0"
+    minimalistic-assert "^1.0.1"
+    minimalistic-crypto-utils "^1.0.1"
+    protobufjs "^7.2.4"
+    randombytes "^2.1.0"
+    safe-buffer "^5.1.1"
+    typeforce "^1.11.5"
+    wif "^2.0.6"
+
 "@istanbuljs/load-nyc-config@^1.0.0":
   version "1.1.0"
   resolved "https://registry.npmjs.org/@istanbuljs/load-nyc-config/-/load-nyc-config-1.1.0.tgz#fd3db1d59ecf7cf121e80650bb86712f9b55eced"
@@ -740,42 +776,6 @@
   integrity sha512-tHhzvkFXZQeTECenFoRljLBYPZJ7jAVxqqtEI0qTLOmuultnFp4I9yKE17vTuhf7BkhCu7I4XuemPgikDVuYqA==
   dependencies:
     "@types/yargs-parser" "*"
-
-"@unielon/coin-base@^1.0.1":
-  version "1.0.1"
-  resolved "https://registry.npmjs.org/@unielon/coin-base/-/coin-base-1.0.1.tgz#2519375bb9abef6e5f26b644efc6ea3d8ee59df6"
-  integrity sha512-4aK58s5OqucK/xogWMNigTDJZTfM+aAXF5vDXF0JJb56azeBcIcAdq5zXS6eUDj4Ef8tf+8zVNjHzlqjQt72bg==
-  dependencies:
-    "@unielon/crypto-lib" "^1.0.1"
-
-"@unielon/crypto-lib@^1.0.1":
-  version "1.0.1"
-  resolved "https://registry.npmjs.org/@unielon/crypto-lib/-/crypto-lib-1.0.1.tgz#f64fdc5be150f61465bdd37294dc0578e0e265f2"
-  integrity sha512-Qlf+9Qrwpc006/3Q2xrJsi0+X6y+4ye8AjGK4xufw8GX5AvDy5IC+t2fCnqJugjqJGtOPwkLf5cIUKLEJ9Jzbw==
-  dependencies:
-    "@noble/ed25519" "^1.7.3"
-    "@noble/hashes" "1.0.0"
-    "@noble/secp256k1" "^1.7.1"
-    "@scure/base" "1.0.0"
-    asmcrypto.js "^2.3.2"
-    bigint-conversion "^2.3.0"
-    bigint-crypto-utils "^3.1.8"
-    bignumber.js "^9.0.1"
-    bn.js "4.12.0"
-    brorand "^1.1.0"
-    crypto-js "^3.3.0"
-    hash.js "^1.0.0"
-    hmac-drbg "^1.0.1"
-    inherits "^2.0.4"
-    jsrsasign "^10.8.2"
-    long "^5.2.0"
-    minimalistic-assert "^1.0.1"
-    minimalistic-crypto-utils "^1.0.1"
-    protobufjs "^7.2.4"
-    randombytes "^2.1.0"
-    safe-buffer "^5.1.1"
-    typeforce "^1.11.5"
-    wif "^2.0.6"
 
 abab@^2.0.3, abab@^2.0.5:
   version "2.0.6"

@@ -7,7 +7,7 @@ import * as networks from './networks';
 import * as payments from './payments';
 import * as bscript from './script';
 import * as types from './types';
-import { base } from '@unielon/crypto-lib';
+import { base } from '@dogeuni-org/crypto-lib';
 const { typeforce } = types;
 
 export interface Base58CheckResult {
