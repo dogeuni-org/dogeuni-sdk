@@ -11,7 +11,7 @@ import {PrevOutput} from "./inscribe";
 
 export type DrcInscriptionData = {
     contentType: string
-    body: string | Buffer
+    body: any
     revealAddr: string
     receiveAddr?: string
     repeat: number
@@ -355,12 +355,15 @@ export function inscribeDrc(network: bitcoin.Network, request: DrcInscriptionReq
             commitAddrs: tool.commitAddrs,
         };
     }
+    const commitHash = tool.commitTx.getHash()
+    const commitString = Buffer.from(commitHash).reverse().toString('hex');
     const hash = tool.revealTxs[0].getHash();
     const hexString = Buffer.from(hash).reverse().toString('hex');
     console.log(hexString, 'hexString1');
     return {
         commitTx: tool.commitTx.toHex(),
-        commitTxHash: hexString,
+        commitTxHash: commitString,
+        revealTxHash: hexString,
         revealTxs: tool.revealTxs.map(revealTx => revealTx.toHex()),
         ...tool.calculateFee(),
         commitAddrs: tool.commitAddrs,

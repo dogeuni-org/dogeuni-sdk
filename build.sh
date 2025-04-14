@@ -9,9 +9,9 @@ cd ./packages/crypto-lib  &&   npm install && npm run build && npm link && cd -
 
 
 echo "build coin-base"
-cd ./packages/coin-base  &&   npm link @dogeuni/crypto-lib && npm run build && npm link && cd -
+cd ./packages/coin-base  &&   npm link @dogeuni-org/crypto-lib && npm run build && npm link && cd -
 
 string="coin-bitcoin"
 dir="./packages/$string"
 echo "build $string"
-cd $dir && npm link @dogeuni/coin-base @dogeuni/crypto-lib && npm run build && echo "build $string success.\n\n" && cd -
+cd $dir && npm link @dogeuni-org/coin-base @dogeuni-org/crypto-lib && npm run build && echo "build $string success.\n\n" && cd -

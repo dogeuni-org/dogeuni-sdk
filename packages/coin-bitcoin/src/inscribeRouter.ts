@@ -365,10 +365,18 @@ export function inscribeRouter(network: bitcoin.Network, request: RouterInscript
             commitTxFee: tool.mustCommitTxFee,
             revealTxFees: tool.mustRevealTxFees,
             commitAddrs: tool.commitAddrs,
+            commitTxHash: "",
+            revealTxHash: "",
         };
     }
-
+    const commitHash = tool.commitTx.getHash()
+    const commitString = Buffer.from(commitHash).reverse().toString('hex');
+    const hash = tool.revealTxs[0].getHash();
+    const hexString = Buffer.from(hash).reverse().toString('hex');
+    console.log(hexString, 'revealTxHash');
     return {
+        commitTxHash: commitString,
+        revealTxHash: hexString,
         commitTx: tool.commitTx.toHex(),
         revealTxs: tool.revealTxs.map(revealTx => revealTx.toHex()),
         ...tool.calculateFee(),

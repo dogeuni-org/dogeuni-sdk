@@ -38,6 +38,8 @@ export type InscriptionRequest = {
 
 export type InscribeTxs = {
     commitTx: string
+    commitTxHash: string
+    revealTxHash: string
     revealTxs: string[]
     commitTxFee: number
     revealTxFees: number[]
