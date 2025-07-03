@@ -254,7 +254,9 @@ It's a example of add script as following:
   "amt1": "",
   "amt0_min": "",
   "amt1_min": "",
-  "doge": 0 // 1
+  "doge": 0 // 1,
+  "tick0": "",
+  "tick1": ""
 }
 ```
 
@@ -272,9 +274,15 @@ It's a example of remove script as following:
 { 
   "p": "pair-v2",
   "op": "remove"
+  "amt0": "",
+  "amt0_min": "",
+  "amt1": "",
+  "amt1_min": "",
+  "doge": 0,
+  "liquidity": "",
   "pair_id": "",
-  "liquidity": "", 
-  "doge": 0 //1
+  "tick0": "",
+  "tick1": ""
 }
 ```
 
@@ -304,14 +312,18 @@ It's a example of create script as following:
   "doge": 0 // 1
 }
 
-{ 
+{
   "p": "pair-v2",
-  "op": "swap"
-  "pair_id":"",
+  "op": "swap",
+  "amt0": "100000000",
+  "amt1": "9546821509",
+  "amt1_min": "9546821509",
+  "doge": 1// 0,
+  "pair_id": "",
+  "tick0": "",
   "tick0_id": "",
-  "amt0": "",
-  "amt1_min": "",
-  "doge": 0 // 1
+  "tick1": "",
+  "tick1_id": ""
 }
 ```
 
@@ -540,7 +552,9 @@ command parameter description
   "amt": "10",
   "symbol": "MEME",
   "name": "meme name",
+  "logo": "",
   "doge": 0 // 1
+  "tag": ""
 }
 ```
 

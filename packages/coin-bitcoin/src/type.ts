@@ -13,19 +13,6 @@ type utxoInput = {
   sighashType?: number,
 }
 
-type toSignInput = {
-  index: number,
-  address: string,
-  publicKey?: string,
-  sighashTypes?: number[],
-  disableTweakSigner?: boolean
-}
-
-type signPsbtOptions = {
-  autoFinalized?: boolean,
-  toSignInputs?: toSignInput[]
-}
-
 type Bip32Derivation = {
   masterFingerprint: string,
   pubkey: string,
@@ -60,37 +47,6 @@ type utxoTx = {
   derivationPath?: string
 }
 
-type ListingData = {
-  nftAddress: string
-  nftUtxo: {
-    txHash: string
-    vout: number
-    coinAmount: number
-    rawTransation: string
-  }
-  receiveBtcAddress: string
-  price: number
-};
-
-type BuyingData = {
-  dummyUtxos: {
-    txHash: string
-    vout: number
-    coinAmount: number
-    rawTransation: string
-  }[]
-  paymentUtxos: {
-    txHash: string
-    vout: number
-    coinAmount: number
-    rawTransation: string
-  }[]
-  receiveNftAddress: string
-  paymentAndChangeAddress: string
-  feeRate: number
-  sellerPsbts: string[]
-}
-
 export {
-  utxoInput, utxoOutput, omniOutput, utxoTx, ListingData, BuyingData, signPsbtOptions, toSignInput
+  utxoInput, utxoOutput, omniOutput, utxoTx
 };

@@ -148,6 +148,10 @@ export class RouterInscriptionTool {
                     pumpTipFee += 10000000;
                 }
             }
+            if (p === 'giveaway' && doge === 1) {
+                pumpFee += 500000000
+                pumpTipFee += 10000000;
+            }
             const fee = transactionFee ? transactionFee : Math.floor(tx.byteLength() * revealFeeRate);
             prevOutputValue = +totalSwapAmt + (+totalFee) + Math.floor((Number(fee) + 100000) / inscriptionDataList.length);
             if (p === 'pump') {

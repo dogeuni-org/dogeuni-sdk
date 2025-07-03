@@ -1,6 +1,6 @@
 {
   "name": "@dogeuni-org/coin-dogecoin",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -14,7 +14,7 @@
     "type": "git",
     "url": "https://github.com/dogeuni-org/dogeuni-sdk"
   },
-  "keywords": [],
+  "keywords": ["dogecoin", "bitcoin", "crypto", "react-native", "expo", "inscription"],
   "author": "dogeuni",
   "license": "MIT",
   "files": [
