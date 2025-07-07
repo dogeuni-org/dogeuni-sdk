@@ -117,8 +117,10 @@ export class DrcInscriptionTool {
             if (body.p == drc20P && opMint == body.op) {
                 repeats = inscriptionDataList[i].repeat
             }
+            let receiveAddrCount = 0;
             if(receiveAddr) {
                 const receiveAddrList = receiveAddr.split(',');
+                receiveAddrCount = receiveAddrList.length;
                 receiveAddrList.map(item => {
                     const changePkScript = bitcoin.address.toOutputScript(item, network);
                     tx.addOutput(changePkScript, defaultRevealOutValue * repeats);
@@ -134,7 +136,9 @@ export class DrcInscriptionTool {
             inscriptionBuilder.push(inscriptionTxCtxData.inscriptionScript);
             const inscriptionScript = bitcoin.script.compile(inscriptionBuilder);
             tx.addInput(Buffer.alloc(32), i, defaultSequenceNum, inscriptionScript);
-            let prevOutputValue = defaultRevealOutValue * repeats
+            let prevOutputValue = receiveAddrCount > 0 ? 
+                defaultRevealOutValue * repeats * receiveAddrCount : 
+                defaultRevealOutValue * repeats;
             const isDrc20Operation = (body: { p: string; }, op: string) => body.p === drc20P && [opDeploy, opTransfer, opMint].includes(op)
             const isSpecialP = (p: string) => [pairV1P, orderV1P, boxV1P, stakeV1P].includes(p)
             if (isDrc20Operation(body, body.op) || opWithdraw === body.op || isSpecialP(body.p)) {
@@ -160,7 +164,12 @@ export class DrcInscriptionTool {
             const fee = Math.floor(tx.byteLength() * revealFeeRate);
             if(body.p === orderV2P && transactionFee || ([stakeV1P, stakeV2P].includes(body.p) && transactionFee) || transactionFee) {
                 if (body.p === 'meme-20') {
-                    prevOutputValue = body.op === 'transfer' ? (+transactionFee + 100000 * receiveAddr.split(',').length) : (+transactionFee + 100000)
+                    if (body.op === 'transfer' && receiveAddr) {
+                        const addrCount = receiveAddr.split(',').length;
+                        prevOutputValue = +transactionFee + 100000 * addrCount;
+                    } else {
+                        prevOutputValue = +transactionFee + 100000;
+                    }
                     console.log(prevOutputValue, 'prevOutputValue---', transactionFee)
                 } else {    
                     prevOutputValue += transactionFee
@@ -215,7 +224,7 @@ export class DrcInscriptionTool {
 
         const fee = transactionFee ? transactionFee : Math.floor(txForEstimate.virtualSize() * commitFeeRate);
         const changeAmount = totalSenderAmount - totalRevealPrevOutputValue - fee;
-        console.log(changeAmount, totalSenderAmount, totalRevealPrevOutputValue, fee, 'test===')
+        console.log(`Commit Tx: changeAmount=${changeAmount}, totalSenderAmount=${totalSenderAmount}, totalRevealPrevOutputValue=${totalRevealPrevOutputValue}, fee=${fee}`);
         if (changeAmount >= minChangeValue) {
             tx.outs[tx.outs.length - 1].value = changeAmount;
         } else {
@@ -353,6 +362,8 @@ export function inscribeDrc(network: bitcoin.Network, request: DrcInscriptionReq
             commitTxFee: tool.mustCommitTxFee,
             revealTxFees: tool.mustRevealTxFees,
             commitAddrs: tool.commitAddrs,
+            commitTxHash: "",
+            revealTxHash: "",
         };
     }
     const commitHash = tool.commitTx.getHash()
