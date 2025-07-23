@@ -9,6 +9,18 @@ import {
 } from "./txBuild";
 import {PrevOutput} from "./inscribe";
 
+export const PEPECOIN_NETWORK = {
+  messagePrefix: '\x18Pepecoin Signed Message:\n',
+  bech32: 'pep',
+  bip32: {
+    public: 0x02facafd,
+    private: 0x02fac398,
+  },
+  pubKeyHash: 56,
+  scriptHash: 22,
+  wif: 158,
+};
+
 export type TransactionRequest = {
     commitTxPrevOutputList: PrevOutput[]
     commitFeeRate: number
@@ -43,6 +55,13 @@ export type TransactionTxCtxData = {
     hash: Buffer
 }
 
+function getNetwork(network: bitcoin.Network): bitcoin.Network {
+    if (network.pubKeyHash === PEPECOIN_NETWORK.pubKeyHash) {
+        return PEPECOIN_NETWORK as bitcoin.Network;
+    }
+    return network;
+}
+
 export class TransactionTool {
     network: bitcoin.Network = bitcoin.networks.bitcoin;
     transactionTxCtxDataList: TransactionTxCtxData[] = [];
@@ -53,7 +72,7 @@ export class TransactionTool {
 
     static newTransactionTool(network: bitcoin.Network, request: TransactionRequest) {
         const tool = new TransactionTool();
-        tool.network = network;
+        tool.network = getNetwork(network);
 
         const minChangeValue = request.minChangeValue || defaultMinChangeValue;
 
@@ -75,6 +94,8 @@ export class TransactionTool {
 
         const tx = new bitcoin.Transaction();
         tx.version = defaultTxVersion;
+        
+        const currentNetwork = getNetwork(network);
 
         commitTxPrevOutputList.forEach(commitTxPrevOutput => {
             const hash = base.reverseBuffer(base.fromHex(commitTxPrevOutput.txId));
@@ -84,7 +105,7 @@ export class TransactionTool {
         });
         let totalRevealPrevOutputValue = 0
         transactionDataList.forEach(item => {
-            const changePkScript = bitcoin.address.toOutputScript(item.revealAddr, network);
+            const changePkScript = bitcoin.address.toOutputScript(item.revealAddr, currentNetwork);
             tx.addOutput(changePkScript, item.amount);
             totalRevealPrevOutputValue += item.amount;
         })
@@ -92,8 +113,8 @@ export class TransactionTool {
         signTx(txForEstimate, commitTxPrevOutputList, this.network);
         const fee = transactionFee ? transactionFee : Math.floor(txForEstimate.virtualSize() * commitFeeRate);
         const changeAmount = totalSenderAmount - totalRevealPrevOutputValue - fee;
-        const changePkScript = bitcoin.address.toOutputScript(changeAddress, network);
-        console.log(changeAmount, 'changeAmount====', minChangeValue, changeAmount >= minChangeValue)
+        const changePkScript = bitcoin.address.toOutputScript(changeAddress, currentNetwork);
+        console.log(changeAmount, 'changeAmount====', minChangeValue, changeAmount >= minChangeValue, fee, totalSenderAmount, totalRevealPrevOutputValue)
         if (changeAmount >= 0) {
             if(changeAmount > 0) {
                 tx.addOutput(changePkScript, changeAmount);
@@ -131,12 +152,13 @@ export class TransactionTool {
 
 function signTx(tx: bitcoin.Transaction, commitTxPrevOutputList: PrevOutput[], network: bitcoin.Network) {
     tx.ins.forEach((input, i) => {
-        const addressType = getAddressType(commitTxPrevOutputList[i].address, network);
-        const privateKey = base.fromHex(privateKeyFromWIF(commitTxPrevOutputList[i].privateKey, network));
+        const currentNetwork = getNetwork(network);
+        const addressType = getAddressType(commitTxPrevOutputList[i].address, currentNetwork);
+        const privateKey = base.fromHex(privateKeyFromWIF(commitTxPrevOutputList[i].privateKey, currentNetwork));
         const privateKeyHex = base.toHex(privateKey);
         const publicKey = private2public(privateKeyHex);
         if (addressType === 'legacy') {
-            const prevScript = bitcoin.address.toOutputScript(commitTxPrevOutputList[i].address, network);
+            const prevScript = bitcoin.address.toOutputScript(commitTxPrevOutputList[i].address, currentNetwork);
             const hash = tx.hashForSignature(i, prevScript, bitcoin.Transaction.SIGHASH_ALL)!;
             const signature = sign(hash, privateKeyHex);
             const payment = bitcoin.payments.p2pkh({
@@ -151,8 +173,9 @@ function signTx(tx: bitcoin.Transaction, commitTxPrevOutputList: PrevOutput[], n
 }
 
 function createTransactionTxCtxData(network: bitcoin.Network, inscriptionData: TransactionData, privateKeyWif: string): TransactionTxCtxData {
-    const privateKey = base.fromHex(privateKeyFromWIF(privateKeyWif, network));
-    const pubKey = wif2Public(privateKeyWif, network);
+    const currentNetwork = getNetwork(network);
+    const privateKey = base.fromHex(privateKeyFromWIF(privateKeyWif, currentNetwork));
+    const pubKey = wif2Public(privateKeyWif, currentNetwork);
     const ops = bitcoin.script.OPS;
 
     const inscriptionBuilder: bitcoin.payments.StackElement[] = [];
@@ -169,7 +192,7 @@ function createTransactionTxCtxData(network: bitcoin.Network, inscriptionData: T
         redeem: {
             output: inscriptionScript,
             redeemVersion: 0xc0,
-            network: network
+            network: currentNetwork
         }
     });
 
@@ -181,8 +204,19 @@ function createTransactionTxCtxData(network: bitcoin.Network, inscriptionData: T
     };
 }
 
+export function createPepecoinNetwork(): bitcoin.Network {
+    return PEPECOIN_NETWORK as bitcoin.Network;
+}
+
+export const pepecoinNetwork = createPepecoinNetwork();
+
+export function pepecoinTransaction(request: TransactionRequest): TransactionTxs {
+    return transaction(pepecoinNetwork, request);
+}
+
 export function transaction(network: bitcoin.Network, request: TransactionRequest) {
-    const tool = TransactionTool.newTransactionTool(network, request);
+    const detectedNetwork = getNetwork(network);
+    const tool = TransactionTool.newTransactionTool(detectedNetwork, request);
     if (tool.mustCommitTxFee > 0) {
         return {
             commitTx: "",
