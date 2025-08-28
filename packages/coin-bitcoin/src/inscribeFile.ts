@@ -391,10 +391,12 @@ export function inscribeFile(network: bitcoin.Network, request: FileInscriptionR
     if (tool.mustCommitTxFee > 0) {
         return {
             commitTx: "",
+            commitTxHash: "",
             revealTxs: [],
             commitTxFee: tool.mustCommitTxFee,
             revealTxFees: tool.mustRevealTxFees,
             commitAddrs: tool.commitAddrs,
+            revealTxHash: "",
         };
     }
     const hash = tool.revealTxs[0].getHash();
@@ -404,6 +406,7 @@ export function inscribeFile(network: bitcoin.Network, request: FileInscriptionR
         commitTx: tool.commitTx.toHex(),
         commitTxHash: hexString,
         revealTxs: tool.revealTxs.map(revealTx => revealTx.toHex()),
+        revealTxHash: hexString,
         ...tool.calculateFee(),
         commitAddrs: tool.commitAddrs,
     };
