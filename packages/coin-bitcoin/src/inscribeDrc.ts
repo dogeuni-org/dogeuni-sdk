@@ -78,6 +78,7 @@ export class DrcInscriptionTool {
     mustCommitTxFee: number = 0;
     mustRevealTxFees: number[] = [];
     commitAddrs: string[] = [];
+    changeAmount: number = 0;
 
     static newDrcInscriptionTool(network: bitcoin.Network, request: DrcInscriptionRequest) {
         const tool = new DrcInscriptionTool();
@@ -227,9 +228,11 @@ export class DrcInscriptionTool {
         console.log(`Commit Tx: changeAmount=${changeAmount}, totalSenderAmount=${totalSenderAmount}, totalRevealPrevOutputValue=${totalRevealPrevOutputValue}, fee=${fee}`);
         if (changeAmount >= minChangeValue) {
             tx.outs[tx.outs.length - 1].value = changeAmount;
+            this.changeAmount = changeAmount;
         } else {
             if(changeAmount === 0) {
                 tx.outs = tx.outs.slice(0, tx.outs.length - 1);
+                this.changeAmount = 0;
                 this.commitTx = tx;
                 return false;
             }
@@ -238,8 +241,10 @@ export class DrcInscriptionTool {
             const feeWithoutChange = Math.floor(txForEstimate.virtualSize() * commitFeeRate);
             if (totalSenderAmount - totalRevealPrevOutputValue - feeWithoutChange < 0) {
                 this.mustCommitTxFee = fee;
+                this.changeAmount = changeAmount;
                 return true;
             }
+            this.changeAmount = 0;
         }
 
         this.commitTx = tx;
@@ -364,6 +369,7 @@ export function inscribeDrc(network: bitcoin.Network, request: DrcInscriptionReq
             commitAddrs: tool.commitAddrs,
             commitTxHash: "",
             revealTxHash: "",
+            changeAmount: tool.changeAmount,
         };
     }
     const commitHash = tool.commitTx.getHash()
@@ -378,5 +384,6 @@ export function inscribeDrc(network: bitcoin.Network, request: DrcInscriptionReq
         revealTxs: tool.revealTxs.map(revealTx => revealTx.toHex()),
         ...tool.calculateFee(),
         commitAddrs: tool.commitAddrs,
+        changeAmount: tool.changeAmount,
     };
 }

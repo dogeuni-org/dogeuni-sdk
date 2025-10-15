@@ -61,6 +61,7 @@ export class RouterInscriptionTool {
     mustCommitTxFee: number = 0;
     mustRevealTxFees: number[] = [];
     commitAddrs: string[] = [];
+    changeAmount: number = 0;
 
     static newRouterInscriptionTool(network: bitcoin.Network, request: RouterInscriptionRequest) {
         const tool = new RouterInscriptionTool();
@@ -224,14 +225,17 @@ export class RouterInscriptionTool {
         console.log(changeAmount, 'changeAmount====',fee)
         if (changeAmount >= minChangeValue) {
             tx.outs[tx.outs.length - 1].value = changeAmount;
+            this.changeAmount = changeAmount;
         } else {
             tx.outs = tx.outs.slice(0, tx.outs.length - 1);
             txForEstimate.outs = txForEstimate.outs.slice(0, txForEstimate.outs.length - 1);
             const feeWithoutChange = Math.floor(txForEstimate.virtualSize() * commitFeeRate);
             if (totalSenderAmount - totalRevealPrevOutputValue - feeWithoutChange < 0) {
                 this.mustCommitTxFee = fee;
+                this.changeAmount = changeAmount;
                 return true;
             }
+            this.changeAmount = 0;
         }
 
         this.commitTx = tx;
@@ -371,6 +375,7 @@ export function inscribeRouter(network: bitcoin.Network, request: RouterInscript
             commitAddrs: tool.commitAddrs,
             commitTxHash: "",
             revealTxHash: "",
+            changeAmount: tool.changeAmount,
         };
     }
     const commitHash = tool.commitTx.getHash()
@@ -385,5 +390,6 @@ export function inscribeRouter(network: bitcoin.Network, request: RouterInscript
         revealTxs: tool.revealTxs.map(revealTx => revealTx.toHex()),
         ...tool.calculateFee(),
         commitAddrs: tool.commitAddrs,
+        changeAmount: tool.changeAmount,
     };
 }

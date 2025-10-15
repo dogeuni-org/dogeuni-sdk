@@ -69,6 +69,7 @@ export class TransactionTool {
     commitTxPrevOutputFetcher: number[] = [];
     mustCommitTxFee: number = 0;
     mustRevealTxFees: number[] = [];
+    changeAmount: number = 0;
 
     static newTransactionTool(network: bitcoin.Network, request: TransactionRequest) {
         const tool = new TransactionTool();
@@ -118,6 +119,9 @@ export class TransactionTool {
         if (changeAmount >= 0) {
             if(changeAmount > 0) {
                 tx.addOutput(changePkScript, changeAmount);
+                this.changeAmount = changeAmount;
+            } else {
+                this.changeAmount = 0;
             }
         } else {
             tx.outs = tx.outs.slice(0, tx.outs.length - 1);
@@ -125,8 +129,10 @@ export class TransactionTool {
             const feeWithoutChange = Math.floor(txForEstimate.virtualSize() * commitFeeRate);
             if (totalSenderAmount - feeWithoutChange < 0) {
                 this.mustCommitTxFee = fee;
+                this.changeAmount = changeAmount;
                 return true;
             }
+            this.changeAmount = changeAmount;
         }
         this.commitTx = tx;
         return false;
@@ -220,12 +226,14 @@ export function transaction(network: bitcoin.Network, request: TransactionReques
     if (tool.mustCommitTxFee > 0) {
         return {
             commitTx: "",
-            commitTxFee: tool.mustCommitTxFee
+            commitTxFee: tool.mustCommitTxFee,
+            changeAmount: tool.changeAmount
         };
     }
 
     return {
         commitTx: tool.commitTx.toHex(),
-        ...tool.calculateFee()
+        ...tool.calculateFee(),
+        changeAmount: tool.changeAmount
     };
 }
