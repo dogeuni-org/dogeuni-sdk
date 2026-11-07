@@ -142,12 +142,15 @@ export class DrcInscriptionTool {
                 defaultRevealOutValue * repeats;
             const isDrc20Operation = (body: { p: string; }, op: string) => body.p === drc20P && [opDeploy, opTransfer, opMint].includes(op)
             const isSpecialP = (p: string) => [pairV1P, orderV1P, boxV1P, stakeV1P].includes(p)
-            if (isDrc20Operation(body, body.op) || opWithdraw === body.op || isSpecialP(body.p)) {
+            // The wdoge payments go with p "wdoge" only: other protocols use the op names deposit and withdraw too
+            // (prize-v1), and a body is never charged for a protocol it is not.
+            const isWdoge = (op: string) => body.p === wdogeP && body.op === op
+            if (isDrc20Operation(body, body.op) || isWdoge(opWithdraw) || isSpecialP(body.p)) {
                 const baseFee = 50000000
                 const changePkScript = bitcoin.address.toOutputScript(feeAddress, network);
                 tx.addOutput(changePkScript, baseFee);
                 prevOutputValue += baseFee
-            } else if (opDeposit == body.op) {
+            } else if (isWdoge(opDeposit)) {
                 let amt = parseInt(body.amt)
                 prevOutputValue += amt
                 const coolPkScript = bitcoin.address.toOutputScript(wdogeCoolAddress, network);
