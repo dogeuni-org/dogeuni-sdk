@@ -110,7 +110,15 @@ commitTxPrevOutputList.push({
 const inscriptionDataList: RouterInscriptionData[] = [];
 inscriptionDataList.push({
     contentType: 'text/plain;charset=utf-8',
-    body: '{"p":"pump","op":"trade","tick": "WDOGE(WRAPPED-DOGE)","amt": "0", "symbol": "TDOG", "name": "TDOG", "doge": 1}',
+    body: JSON.stringify({
+        p: 'pump',
+        op: 'trade',
+        pair_id: 'ab'.repeat(32), // 示例占位值，替换为实际 Pump pair_id
+        tick0_id: 'WDOGE(WRAPPED-DOGE)', // 买入：输入 WDOGE；卖出：输入代币 tick_id
+        amt0: '100000000', // 输入金额，链上最小单位整数串
+        amt1_min: '1000', // 仅演示：实际值由调用方根据报价和滑点计算，使用输出币的最小单位
+        doge: 1,
+    }),
     revealAddr: 'DEm5jczGyyfrb8AbufR893FLxkWBwY8tAk'
 }); 
 const request = {
@@ -544,6 +552,16 @@ command parameter description
 
 ```
 ### Pump
+
+Pump 买卖通过 `inscribeRouter` 构造交易。调用方应在 `body` 中提供 `amt1_min`（最低实收量），
+使用**输出币种的链上最小单位整数串**；不要先转成 JavaScript `Number`，以免大整数丢失精度。
+买入时它表示最低收到的代币数量，卖出时表示最低收到的 WDOGE 数量。
+以下金额和 ID 仅作格式演示，实际值由调用方根据池、报价和滑点提供。
+
+本 SDK 将 Pump `body` 原样写入铭文，不计算最低实收量，也不补齐或校验缺失、为 `"0"` 的 `amt1_min`。
+调用方应自行确保最低实收量符合预期。本 SDK 不读取曲线储备或判断停止交易阈值；
+调用方负责下单前检查交易状态，最终能否成交由节点规则判定。
+
 ```typescript
 { 
   "p": "pump",
@@ -558,15 +576,31 @@ command parameter description
 }
 ```
 
-```typescript
+买入示例（`tick0_id` 为 WDOGE）：
+
+```json
 { 
   "p": "pump",
   "op": "trade",
-  "pair_id": "xxxxxxx",
-  "tick0_id": "CZZ",
-  "amt0": "1000",
+  "pair_id": "替换为实际 Pump pair_id",
+  "tick0_id": "WDOGE(WRAPPED-DOGE)",
+  "amt0": "100000000",
   "amt1_min": "1000",
-  "doge": 0 // 1
+  "doge": 1
+}
+```
+
+卖出示例（`tick0_id` 为卖出代币的 tick_id）：
+
+```json
+{
+  "p": "pump",
+  "op": "trade",
+  "pair_id": "替换为实际 Pump pair_id",
+  "tick0_id": "替换为卖出代币的 tick_id",
+  "amt0": "100000000",
+  "amt1_min": "1000",
+  "doge": 0
 }
 ```
 ## License: MIT

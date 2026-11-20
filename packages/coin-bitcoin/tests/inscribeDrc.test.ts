@@ -1,6 +1,6 @@
-// Which payments inscribeDrc adds to a reveal beside the inscription's own output, by protocol and op.
+// Offline regression coverage for DRC payments and Pump router inscriptions.
 import * as crypto from 'crypto';
-import { address, dogeCoin, inscribeDrc, payments, private2Wif, Transaction, wif2Public } from '../src';
+import { address, dogeCoin, inscribeDrc, inscribeRouter, payments, private2Wif, script, Transaction, wif2Public } from '../src';
 
 const FEE_ADDRESS = 'DEMZQAJjdNMM9M3Sk7LAmtPdk8me6SZUm1';
 const WDOGE_FEE_ADDRESS = 'D86Dc4n49LZDiXvB41ds2XaDAP1BFjP1qy';
@@ -48,4 +48,65 @@ describe('inscribeDrc reveal payments', () => {
         expect(revealOutputs({ p: 'drc-20', op: 'transfer', tick: 'UNIX', amt: '1' })).toEqual([[account, 100000], [FEE_ADDRESS, 50000000]]);
         expect(revealOutputs({ p: 'stake-v1', op: 'withdraw', tick: 'UNIX', amt: '1' })).toEqual([[account, 100000], [FEE_ADDRESS, 50000000]]);
     });
+});
+
+const WDOGE = 'WDOGE(WRAPPED-DOGE)';
+const PAIR_ID = 'ab'.repeat(32);
+const TOKEN_ID = 'cd'.repeat(32);
+
+// Uses the ephemeral test key above and a nonexistent UTXO; never broadcasts.
+function inscriptionBody(body: string): string {
+    const request = {
+        commitTxPrevOutputList: [{ txId: '00'.repeat(32), vOut: 0, amount: 1000e8, address: account, privateKey }],
+        commitFeeRate: 1000,
+        revealFeeRate: 1000,
+        inscriptionDataList: [{ contentType: 'text/plain;charset=utf-8', body, revealAddr: account }],
+        changeAddress: account,
+    };
+    const txs = inscribeRouter(dogeCoin, request);
+    expect(txs.commitTx).not.toBe('');
+    expect(txs.revealTxs).toHaveLength(1);
+    expect(request.inscriptionDataList[0].body).toBe(body);
+
+    const reveal = Transaction.fromHex(txs.revealTxs[0]);
+    const unlock = script.decompile(reveal.ins[0].script);
+    if (!unlock) throw new Error('Missing reveal input script');
+    const redeem = unlock[unlock.length - 1];
+    if (!Buffer.isBuffer(redeem)) throw new Error('Missing inscription redeem script');
+    const inscription = script.decompile(redeem);
+    if (!inscription) throw new Error('Invalid inscription script');
+    expect(inscription[4]).toEqual(Buffer.from('ord'));
+    expect(inscription[5]).toEqual(Buffer.from('text/plain;charset=utf-8'));
+    const payload = inscription[6];
+    if (!Buffer.isBuffer(payload)) throw new Error('Missing inscription body');
+    return payload.toString('utf8');
+}
+
+describe.each([
+    ['buy', 0, WDOGE],
+    ['buy', 1, WDOGE],
+    ['sell', 0, TOKEN_ID],
+    ['sell', 1, TOKEN_ID],
+])('Pump %s with doge=%i', (_side, doge, tick0Id) => {
+    test.each(['1', '9007199254740993', '0', undefined])(
+        'preserves amt1_min=%s in the serialized reveal', (minimumOut) => {
+            const payload = {
+                p: 'pump', op: 'trade', pair_id: PAIR_ID, tick0_id: tick0Id,
+                amt0: '100000000', doge,
+                ...(minimumOut === undefined ? {} : { amt1_min: minimumOut }),
+            };
+            // Whitespace is intentional: verify byte-for-byte passthrough, including large integer strings.
+            const body = JSON.stringify(payload, null, 2);
+            const embedded = inscriptionBody(body);
+            expect(embedded).toBe(body);
+            const decoded = JSON.parse(embedded);
+            expect(decoded).toEqual(payload);
+            if (minimumOut === undefined) {
+                expect(decoded).not.toHaveProperty('amt1_min');
+            } else {
+                expect(decoded.amt1_min).toBe(minimumOut);
+                expect(typeof decoded.amt1_min).toBe('string');
+            }
+        },
+    );
 });
