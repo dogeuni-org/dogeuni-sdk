@@ -593,12 +593,14 @@ export function inscribeBinaryData(
         };
     }
 
+    const commitHash = tool.commitTx.getHash();
+    const commitHexString = Buffer.from(commitHash).reverse().toString('hex');
     const hash = tool.revealTxs[0].getHash();
     const hexString = Buffer.from(hash).reverse().toString('hex');
 
     return {
         commitTx: tool.commitTx.toHex(),
-        commitTxHash: hexString,
+        commitTxHash: commitHexString,
         revealTxs: tool.revealTxs.map(revealTx => revealTx.toHex()),
         revealTxHash: hexString,
         ...tool.calculateFee(),

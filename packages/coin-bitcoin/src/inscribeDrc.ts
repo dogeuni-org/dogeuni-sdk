@@ -241,7 +241,7 @@ export class DrcInscriptionTool {
             }
             tx.outs = tx.outs.slice(0, tx.outs.length - 1);
             txForEstimate.outs = txForEstimate.outs.slice(0, txForEstimate.outs.length - 1);
-            const feeWithoutChange = Math.floor(txForEstimate.virtualSize() * commitFeeRate);
+            const feeWithoutChange = transactionFee ? transactionFee : Math.floor(txForEstimate.virtualSize() * commitFeeRate);
             if (totalSenderAmount - totalRevealPrevOutputValue - feeWithoutChange < 0) {
                 this.mustCommitTxFee = fee;
                 this.changeAmount = changeAmount;
@@ -290,7 +290,9 @@ export class DrcInscriptionTool {
         this.revealTxs.forEach((revealTx, i) => {
             let revealTxFee = 0;
             revealTxFee += this.revealTxPrevOutputFetcher[i];
-            revealTxFee -= revealTx.outs[0].value;
+            revealTx.outs.forEach(out => {
+                revealTxFee -= out.value;
+            });
             revealTxFees.push(revealTxFee);
         });
 
