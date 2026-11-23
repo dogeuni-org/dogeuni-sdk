@@ -266,7 +266,7 @@ export class DrcInscriptionTool {
             this.revealTxPrevOutputFetcher.push(this.inscriptionTxCtxDataList[i].revealTxPrevOutput.value);
 
             const privateKeyHex = base.toHex(this.inscriptionTxCtxDataList[i].privateKey);
-            const hash = revealTx.hashForSignature(i, this.inscriptionTxCtxDataList[i].inscriptionScript, bitcoin.Transaction.SIGHASH_ALL)!;
+            const hash = revealTx.hashForSignature(0, this.inscriptionTxCtxDataList[i].inscriptionScript, bitcoin.Transaction.SIGHASH_ALL)!;
             const signature = sign(hash, privateKeyHex);
             const inscriptionBuilder: bitcoin.payments.StackElement[] = [];
             inscriptionBuilder.push(ops.OP_10);

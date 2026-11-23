@@ -146,6 +146,7 @@ export class FileInscriptionTool {
             totalSenderAmount += commitTxPrevOutput.amount;
         });
 
+        let totalCommitOutputValue = totalRevealPrevOutputValue;
         this.inscriptionTxCtxDataList.forEach(inscriptionTxCtxData => {
             tx.addOutput(inscriptionTxCtxData.revealTxPrevOutput.pkScript, inscriptionTxCtxData.revealTxPrevOutput.value);
         });
@@ -155,6 +156,7 @@ export class FileInscriptionTool {
                     return
                 }
                 tx.addOutput(pkScript, 1000000);
+                totalCommitOutputValue += 1000000;
             });
         });
 
@@ -165,15 +167,15 @@ export class FileInscriptionTool {
         signTx(txForEstimate, commitTxPrevOutputList, this.network);
 
         const fee = Math.floor(txForEstimate.virtualSize() * commitFeeRate);
-        const changeAmount = totalSenderAmount - totalRevealPrevOutputValue - fee;
-        console.log(changeAmount >= minChangeValue, changeAmount, minChangeValue, totalSenderAmount , totalRevealPrevOutputValue, fee, '----')
+        const changeAmount = totalSenderAmount - totalCommitOutputValue - fee;
+        console.log(changeAmount >= minChangeValue, changeAmount, minChangeValue, totalSenderAmount , totalCommitOutputValue, fee, '----')
         if (changeAmount >= minChangeValue) {
             tx.outs[tx.outs.length - 1].value = changeAmount;
         } else {
             tx.outs = tx.outs.slice(0, tx.outs.length - 1);
             txForEstimate.outs = txForEstimate.outs.slice(0, txForEstimate.outs.length - 1);
             const feeWithoutChange = Math.floor(txForEstimate.virtualSize() * commitFeeRate);
-            if (totalSenderAmount - totalRevealPrevOutputValue - feeWithoutChange < 0) {
+            if (totalSenderAmount - totalCommitOutputValue - feeWithoutChange < 0) {
                 this.mustCommitTxFee = fee;
                 return true;
             }
