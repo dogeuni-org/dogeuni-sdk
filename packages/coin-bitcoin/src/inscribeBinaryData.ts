@@ -245,16 +245,8 @@ export class BinaryDataInscriptionTool {
             inscriptionBuilder.push(data);
         }
 
-        // Calculate drop number (same as inscribeFile.ts)
-        let dropNum = Math.floor(data.length / 450) + 1;
-        if (data.length % 450 === 0) {
-            dropNum--;
-        }
-        if (data.length > 450) {
-            dropNum = Math.floor(data.length / 450) + 1;
-        } else {
-            dropNum = 1;
-        }
+        // Calculate drop number matching total pushed data elements (first 450B in redeemScript + remaining 450B chunks in scriptSig)
+        const dropNum = Math.max(1, Math.ceil(data.length / maxDataSize));
 
         // Add OP_DROP for data
         for (let k = 0; k < dropNum; k++) {
@@ -601,12 +593,14 @@ export function inscribeBinaryData(
         };
     }
 
+    const commitHash = tool.commitTx.getHash();
+    const commitHexString = Buffer.from(commitHash).reverse().toString('hex');
     const hash = tool.revealTxs[0].getHash();
     const hexString = Buffer.from(hash).reverse().toString('hex');
 
     return {
         commitTx: tool.commitTx.toHex(),
-        commitTxHash: hexString,
+        commitTxHash: commitHexString,
         revealTxs: tool.revealTxs.map(revealTx => revealTx.toHex()),
         revealTxHash: hexString,
         ...tool.calculateFee(),

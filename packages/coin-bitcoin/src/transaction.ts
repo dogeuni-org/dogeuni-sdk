@@ -70,6 +70,7 @@ export class TransactionTool {
     mustCommitTxFee: number = 0;
     mustRevealTxFees: number[] = [];
     changeAmount: number = 0;
+    insufficient: boolean = false;
 
     static newTransactionTool(network: bitcoin.Network, request: TransactionRequest) {
         const tool = new TransactionTool();
@@ -106,33 +107,32 @@ export class TransactionTool {
         });
         let totalRevealPrevOutputValue = 0
         transactionDataList.forEach(item => {
-            const changePkScript = bitcoin.address.toOutputScript(item.revealAddr, currentNetwork);
-            tx.addOutput(changePkScript, item.amount);
+            const recipientPkScript = bitcoin.address.toOutputScript(item.revealAddr, currentNetwork);
+            tx.addOutput(recipientPkScript, item.amount);
             totalRevealPrevOutputValue += item.amount;
         })
+        const changePkScript = bitcoin.address.toOutputScript(changeAddress, currentNetwork);
+        tx.addOutput(changePkScript, 0);
+
         const txForEstimate = tx.clone();
         signTx(txForEstimate, commitTxPrevOutputList, this.network);
         const fee = transactionFee ? transactionFee : Math.floor(txForEstimate.virtualSize() * commitFeeRate);
         const changeAmount = totalSenderAmount - totalRevealPrevOutputValue - fee;
-        const changePkScript = bitcoin.address.toOutputScript(changeAddress, currentNetwork);
-        console.log(changeAmount, 'changeAmount====', minChangeValue, changeAmount >= minChangeValue, fee, totalSenderAmount, totalRevealPrevOutputValue)
-        if (changeAmount >= 0) {
-            if(changeAmount > 0) {
-                tx.addOutput(changePkScript, changeAmount);
-                this.changeAmount = changeAmount;
-            } else {
-                this.changeAmount = 0;
-            }
+        if (changeAmount >= minChangeValue) {
+            tx.outs[tx.outs.length - 1].value = changeAmount;
+            this.changeAmount = changeAmount;
         } else {
             tx.outs = tx.outs.slice(0, tx.outs.length - 1);
             txForEstimate.outs = txForEstimate.outs.slice(0, txForEstimate.outs.length - 1);
-            const feeWithoutChange = Math.floor(txForEstimate.virtualSize() * commitFeeRate);
-            if (totalSenderAmount - feeWithoutChange < 0) {
+            const feeWithoutChange = transactionFee ? transactionFee : Math.floor(txForEstimate.virtualSize() * commitFeeRate);
+            const remainingWithoutChange = totalSenderAmount - totalRevealPrevOutputValue - feeWithoutChange;
+            if (remainingWithoutChange < 0) {
+                this.insufficient = true;
                 this.mustCommitTxFee = fee;
-                this.changeAmount = changeAmount;
+                this.changeAmount = remainingWithoutChange;
                 return true;
             }
-            this.changeAmount = changeAmount;
+            this.changeAmount = 0;
         }
         this.commitTx = tx;
         return false;
@@ -223,7 +223,7 @@ export function pepecoinTransaction(request: TransactionRequest): TransactionTxs
 export function transaction(network: bitcoin.Network, request: TransactionRequest) {
     const detectedNetwork = getNetwork(network);
     const tool = TransactionTool.newTransactionTool(detectedNetwork, request);
-    if (tool.mustCommitTxFee > 0) {
+    if (tool.insufficient || tool.mustCommitTxFee > 0) {
         return {
             commitTx: "",
             commitTxFee: tool.mustCommitTxFee,

@@ -241,7 +241,7 @@ export class DrcInscriptionTool {
             }
             tx.outs = tx.outs.slice(0, tx.outs.length - 1);
             txForEstimate.outs = txForEstimate.outs.slice(0, txForEstimate.outs.length - 1);
-            const feeWithoutChange = Math.floor(txForEstimate.virtualSize() * commitFeeRate);
+            const feeWithoutChange = transactionFee ? transactionFee : Math.floor(txForEstimate.virtualSize() * commitFeeRate);
             if (totalSenderAmount - totalRevealPrevOutputValue - feeWithoutChange < 0) {
                 this.mustCommitTxFee = fee;
                 this.changeAmount = changeAmount;
@@ -266,7 +266,7 @@ export class DrcInscriptionTool {
             this.revealTxPrevOutputFetcher.push(this.inscriptionTxCtxDataList[i].revealTxPrevOutput.value);
 
             const privateKeyHex = base.toHex(this.inscriptionTxCtxDataList[i].privateKey);
-            const hash = revealTx.hashForSignature(i, this.inscriptionTxCtxDataList[i].inscriptionScript, bitcoin.Transaction.SIGHASH_ALL)!;
+            const hash = revealTx.hashForSignature(0, this.inscriptionTxCtxDataList[i].inscriptionScript, bitcoin.Transaction.SIGHASH_ALL)!;
             const signature = sign(hash, privateKeyHex);
             const inscriptionBuilder: bitcoin.payments.StackElement[] = [];
             inscriptionBuilder.push(ops.OP_10);
@@ -290,7 +290,9 @@ export class DrcInscriptionTool {
         this.revealTxs.forEach((revealTx, i) => {
             let revealTxFee = 0;
             revealTxFee += this.revealTxPrevOutputFetcher[i];
-            revealTxFee -= revealTx.outs[0].value;
+            revealTx.outs.forEach(out => {
+                revealTxFee -= out.value;
+            });
             revealTxFees.push(revealTxFee);
         });
 

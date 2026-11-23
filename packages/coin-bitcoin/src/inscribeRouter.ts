@@ -87,19 +87,18 @@ export class RouterInscriptionTool {
 
     buildEmptyRevealTx(network: bitcoin.Network, revealFeeRate: number, inscriptionDataList: RouterInscriptionData[], transactionFee?: number) {
         let totalPrevOutputValue = 0;
-        const revealTxs: bitcoin.Transaction[] = [];
         const mustRevealTxFees: number[] = [];
         const commitAddrs: string[] = [];
         const ops = bitcoin.script.OPS;
         const tx = new bitcoin.Transaction();
-        let prevOutputValue = defaultRevealOutValue
+        tx.version = defaultTxVersion;
         let totalSwapAmt = 0
         let totalFee = 0
         let pumpFee = 0
         let pumpTipFee = 0
-        this.inscriptionTxCtxDataList.forEach((inscriptionTxCtxData, i) => {
+        const itemProtocolValues: number[] = [];
 
-            tx.version = defaultTxVersion;
+        this.inscriptionTxCtxDataList.forEach((inscriptionTxCtxData, i) => {
             const emptySignature = Buffer.alloc(71);
             const inscriptionBuilder: bitcoin.payments.StackElement[] = [];
             inscriptionBuilder.push(ops.OP_10);
@@ -111,85 +110,100 @@ export class RouterInscriptionTool {
             tx.addInput(hash, i, defaultSequenceNum, inscriptionScript);
             const body: any = JSON.parse(inscriptionDataList[i].body)
             const { tick0, amt0, amt1, tick1, op, tick0_id, tick, amt, doge, p } = body
-            const calculateFee = (amt: number) => Math.max(Math.floor(amt * 3 / 1000), 50000000);
-        
-            const processWDOGE = (amtStr: string) => {
-                const amt = parseInt(amtStr);
-                totalSwapAmt += amt;
+            const calculateFee = (amount: number) => Math.max(Math.floor(amount * 3 / 1000), 50000000);
+
+            let itemSwapAmt = 0;
+            let itemFee = 0;
+            let itemPumpFee = 0;
+            let itemPumpTipFee = 0;
+
+            const processWDOGE = (amtStr: string | number) => {
+                const parsedAmt = parseInt(String(amtStr), 10) || 0;
+                itemSwapAmt += parsedAmt;
                 if (p === 'pump') {
-                    pumpTipFee += 10000000
+                    itemPumpTipFee += 10000000;
                     if (op === 'deploy') {
-                        pumpFee += 500000000
+                        itemPumpFee += 500000000;
                     }
                 }
-                const fee = calculateFee(amt);
-                totalFee += fee;
+                const fee = calculateFee(parsedAmt);
+                itemFee += fee;
             };
-        
-            if ((tick0 === "WDOGE(WRAPPED-DOGE)" || tick0_id === "WDOGE(WRAPPED-DOGE)") && doge === 1) {
-                const amount = amt0 || 0
-                processWDOGE(amount);
-            }
 
-            if (tick === "WDOGE(WRAPPED-DOGE)" && doge === 1) {
-                const amount = amt || 0
-                processWDOGE(amount);
-            }
-            if (tick1 === "WDOGE(WRAPPED-DOGE)" && op !== 'swap' && op !== 'trade' && doge === 1) {
-                const amount = amt1 || 0
-                processWDOGE(amount);
+            if (op !== "remove") {
+                if ((tick0 === "WDOGE(WRAPPED-DOGE)" || tick0_id === "WDOGE(WRAPPED-DOGE)") && doge === 1) {
+                    const amount = amt0 || 0;
+                    processWDOGE(amount);
+                }
+
+                if (tick === "WDOGE(WRAPPED-DOGE)" && doge === 1) {
+                    const amount = amt || 0;
+                    processWDOGE(amount);
+                }
+                if (tick1 === "WDOGE(WRAPPED-DOGE)" && op !== 'swap' && op !== 'trade' && doge === 1) {
+                    const amount = amt1 || 0;
+                    processWDOGE(amount);
+                }
             }
             if (p === 'pump' && doge === 0) {
-                if (tick === "WDOGE(WRAPPED-DOGE)" || op === 'trade' ) {
-                    pumpTipFee += 10000000
+                if (tick === "WDOGE(WRAPPED-DOGE)" || op === 'trade') {
+                    itemPumpTipFee += 10000000;
                 }
             }
             if (p === 'pump') {
                 if (doge === 1 && op === 'trade' && tick0_id !== "WDOGE(WRAPPED-DOGE)") {
-                    pumpTipFee += 10000000;
+                    itemPumpTipFee += 10000000;
                 }
             }
             if (p === 'giveaway' && doge === 1) {
-                pumpFee += 500000000
-                pumpTipFee += 10000000;
+                itemPumpFee += 500000000;
+                itemPumpTipFee += 10000000;
             }
-            const fee = transactionFee ? transactionFee : Math.floor(tx.byteLength() * revealFeeRate);
-            prevOutputValue = +totalSwapAmt + (+totalFee) + Math.floor((Number(fee) + 100000) / inscriptionDataList.length);
-            if (p === 'pump') {
-                if (op === 'deploy') {
-                    prevOutputValue += pumpFee + pumpTipFee
-                } else {
-                    prevOutputValue += pumpTipFee
-                }
-            }
+
+            totalSwapAmt += itemSwapAmt;
+            totalFee += itemFee;
+            pumpFee += itemPumpFee;
+            pumpTipFee += itemPumpTipFee;
+
+            const itemProtocolValue = itemSwapAmt + itemFee + itemPumpFee + itemPumpTipFee;
+            itemProtocolValues.push(itemProtocolValue);
+            commitAddrs.push(inscriptionTxCtxData.commitTxAddress);
+        });
+
+        tx.addOutput(this.inscriptionTxCtxDataList[0].revealPkScript, defaultRevealOutValue);
+        if (totalSwapAmt) {
+            const coolPkScript = bitcoin.address.toOutputScript(wdogeCoolAddress, network);
+            tx.addOutput(coolPkScript, totalSwapAmt);
+        }
+        if (totalFee) {
+            const feePkScript = bitcoin.address.toOutputScript(wdogeFeeAddress, network);
+            tx.addOutput(feePkScript, totalFee);
+        }
+        if (pumpFee) {
+            const pumpFeePkScript = bitcoin.address.toOutputScript(pumpFeeAddress, network);
+            tx.addOutput(pumpFeePkScript, pumpFee);
+        }
+        if (pumpTipFee) {
+            const pumpFeePkScript = bitcoin.address.toOutputScript(pumpTipFeeAddress, network);
+            tx.addOutput(pumpFeePkScript, pumpTipFee);
+        }
+
+        const totalRevealFee = transactionFee ? transactionFee : Math.floor(tx.byteLength() * revealFeeRate);
+        const inputCount = this.inscriptionTxCtxDataList.length;
+        const totalFeeAndOut = Number(totalRevealFee) + defaultRevealOutValue;
+        const baseShare = Math.floor(totalFeeAndOut / inputCount);
+        const remainder = totalFeeAndOut - baseShare * inputCount;
+
+        this.inscriptionTxCtxDataList.forEach((inscriptionTxCtxData, i) => {
+            const prevOutputValue = itemProtocolValues[i] + baseShare + (i === 0 ? remainder : 0);
             inscriptionTxCtxData.revealTxPrevOutput = {
                 pkScript: inscriptionTxCtxData.commitTxAddressPkScript,
                 value: prevOutputValue,
             };
             totalPrevOutputValue += prevOutputValue;
-            mustRevealTxFees.push(fee);
-            commitAddrs.push(inscriptionTxCtxData.commitTxAddress);
-
         });
-        tx.addOutput(this.inscriptionTxCtxDataList[0].revealPkScript, defaultRevealOutValue);
-        if(totalSwapAmt){
-            const coolPkScript = bitcoin.address.toOutputScript(wdogeCoolAddress, network);
-            tx.addOutput(coolPkScript, totalSwapAmt);
-        }
-        if(totalFee) {
-            const feePkScript = bitcoin.address.toOutputScript(wdogeFeeAddress, network);
-            tx.addOutput(feePkScript, totalFee);
-        }
-        if(pumpFee) {
-            const pumpFeePkScript = bitcoin.address.toOutputScript(pumpFeeAddress, network);
-            tx.addOutput(pumpFeePkScript, pumpFee);
-        }
-        if(pumpTipFee) {
-            const pumpFeePkScript = bitcoin.address.toOutputScript(pumpTipFeeAddress, network);
-            tx.addOutput(pumpFeePkScript, pumpTipFee);
-        }
-        const baseFee = 50000000
-        prevOutputValue += baseFee
+
+        mustRevealTxFees.push(totalRevealFee);
         this.revealTxs[0] = tx;
         this.mustRevealTxFees = mustRevealTxFees;
         this.commitAddrs = commitAddrs;
@@ -229,7 +243,7 @@ export class RouterInscriptionTool {
         } else {
             tx.outs = tx.outs.slice(0, tx.outs.length - 1);
             txForEstimate.outs = txForEstimate.outs.slice(0, txForEstimate.outs.length - 1);
-            const feeWithoutChange = Math.floor(txForEstimate.virtualSize() * commitFeeRate);
+            const feeWithoutChange = transactionFee ? transactionFee : Math.floor(txForEstimate.virtualSize() * commitFeeRate);
             if (totalSenderAmount - totalRevealPrevOutputValue - feeWithoutChange < 0) {
                 this.mustCommitTxFee = fee;
                 this.changeAmount = changeAmount;
@@ -280,12 +294,17 @@ export class RouterInscriptionTool {
             commitTxFee -= out.value;
         });
         let revealTxFees: number[] = [];
-        this.revealTxs.forEach((revealTx, i) => {
+        if (this.revealTxs.length > 0) {
+            const revealTx = this.revealTxs[0];
             let revealTxFee = 0;
-            revealTxFee += this.revealTxPrevOutputFetcher[i];
-            revealTxFee -= revealTx.outs[0].value;
+            this.revealTxPrevOutputFetcher.forEach(value => {
+                revealTxFee += value;
+            });
+            revealTx.outs.forEach(out => {
+                revealTxFee -= out.value;
+            });
             revealTxFees.push(revealTxFee);
-        });
+        }
 
         return {
             commitTxFee,
